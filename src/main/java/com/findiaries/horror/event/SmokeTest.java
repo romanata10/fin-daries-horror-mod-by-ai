@@ -125,9 +125,7 @@ public final class SmokeTest {
         Journey.spawnWatcher(wonderland, fake);
 
         FinDiaries.LOGGER.info("FINDIARIES SMOKE: OK");
-        if (server.isDedicatedServer()) {
-            server.halt(false);
-        }
+        server.halt(false);
     }
 
     private SmokeTest() {

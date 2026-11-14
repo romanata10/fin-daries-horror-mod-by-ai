@@ -373,9 +373,11 @@ public final class ClientPhenomena {
             g.begin(x, y, z, Math.sin(turn), Math.cos(turn), 1.0D, 0.86F);
             double h = height;
             // cap
-            g.box(-15, h - 3, -15, 15, h + 3, 15, color, true);
-            g.box(-12, h + 3, -12, 12, h + 8, 12, color, true);
-            g.box(-7, h + 8, -7, 7, h + 11, 7, color, true);
+            g.box(-13, h - 3, -13, 13, h, 13, dark, true);
+            g.box(-16, h, -16, 16, h + 5, 16, color, true);
+            g.box(-14, h + 5, -14, 14, h + 9, 14, color, true);
+            g.box(-11, h + 9, -11, 11, h + 12, 11, color, true);
+            g.box(-7, h + 12, -7, 7, h + 14, 7, color, true);
             // neck
             g.box(-3, h - 13, -3, 3, h - 3, 3, dark, true);
             // four legs: out from under the cap, then all the way down

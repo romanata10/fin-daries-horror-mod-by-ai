@@ -341,26 +341,30 @@ public class DreamChunkGenerator extends ChunkGenerator {
                 }
             }
         }
-        final int cell = 44, reach = 28;
+        final int cell = 30, reach = 28;
         for (int gx = Math.floorDiv(c.minX - reach, cell); gx <= Math.floorDiv(c.maxX + reach, cell); gx++) {
             for (int gz = Math.floorDiv(c.minZ - reach, cell); gz <= Math.floorDiv(c.maxZ + reach, cell); gz++) {
                 Random r = new Random(hash(gx, gz, 101));
-                int cx = gx * cell + 8 + r.nextInt(cell - 16);
-                int cz = gz * cell + 8 + r.nextInt(cell - 16);
+                int cx = gx * cell + 4 + r.nextInt(cell - 8);
+                int cz = gz * cell + 4 + r.nextInt(cell - 8);
                 int roll = r.nextInt(100);
-                if (wonderlandReserved(cx, cz, 26)) {
+                if (wonderlandReserved(cx, cz, 10)) {
                     continue;
                 }
                 int base = height(Style.WONDERLAND, cx, cz) + 1;
+                int flowerScale = wonderlandReserved(cx, cz, 26) ? 1 : 1 + r.nextInt(3);
                 if (roll < 28) {
-                    giantFlower(c, POPPY_ART, cx, base, cz, 1 + r.nextInt(3));
+                    giantFlower(c, POPPY_ART, cx, base, cz, flowerScale);
                 } else if (roll < 52) {
-                    giantFlower(c, DANDELION_ART, cx, base, cz, 1 + r.nextInt(3));
+                    giantFlower(c, DANDELION_ART, cx, base, cz, flowerScale);
                 } else if (roll < 84) {
                     int n = 3 + r.nextInt(5);
                     for (int i = 0; i < n; i++) {
-                        int tx = cx + r.nextInt(29) - 14;
-                        int tz = cz + r.nextInt(29) - 14;
+                        int tx = cx + r.nextInt(21) - 10;
+                        int tz = cz + r.nextInt(21) - 10;
+                        if (wonderlandReserved(tx, tz, 3)) {
+                            continue;
+                        }
                         brokenTree(c, r, tx, height(Style.WONDERLAND, tx, tz) + 1, tz);
                     }
                 } else {
@@ -408,7 +412,7 @@ public class DreamChunkGenerator extends ChunkGenerator {
                 if (Math.abs(cx) < half + 4) {
                     continue; // keep the path clear
                 }
-                if (cz > RIVER_Z0 - half - 2 && cz < RIVER_Z1 + half + 2) {
+                if (cz > RIVER_Z0 - 5 && cz < RIVER_Z1 + 5) {
                     continue; // keep the river clear
                 }
                 giantFlower(c, POPPY_ART, cx, height(Style.WONDERFLOWERS, cx, cz) + 1, cz, s);

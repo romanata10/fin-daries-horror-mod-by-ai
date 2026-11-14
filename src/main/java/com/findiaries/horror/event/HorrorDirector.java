@@ -120,7 +120,7 @@ public final class HorrorDirector {
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
-        if (Boolean.getBoolean("findiaries.smoke")) {
+        if (Boolean.getBoolean("findiaries.smoke") && event.getServer().isDedicatedServer()) {
             SmokeTest.run(event.getServer());
         }
     }
