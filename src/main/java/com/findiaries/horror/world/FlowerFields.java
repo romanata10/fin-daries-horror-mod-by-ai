@@ -1,6 +1,9 @@
 package com.findiaries.horror.world;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.tags.BiomeTags;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
@@ -8,7 +11,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The flower biome of the overworld. Forge cannot add a real biome to vanilla terrain without extra
@@ -19,20 +24,31 @@ import java.util.Random;
 public final class FlowerFields {
     private static final int CELL = 320;
 
-    /** x, z, radius of the field that owns this grid cell, or null. */
-    private static int[] field(long seed, int cellX, int cellZ) {
-        Random r = new Random(DreamChunkGenerator.hash(cellX, cellZ, seed ^ 0x77L));
-        if (r.nextInt(5) != 0) {
+    private static final Map<Long, Boolean> DRY = new ConcurrentHashMap<>();
+
+    public static void clear() {
+        DRY.clear();
+    }
+
+    /** x, z, radius of the field that owns this grid cell, or null. Fields never lie in oceans, rivers or on beaches. */
+    private static int[] field(ServerLevel level, int cellX, int cellZ) {
+        Random r = new Random(DreamChunkGenerator.hash(cellX, cellZ, level.getSeed() ^ 0x77L));
+        if (r.nextInt(4) != 0) {
             return null;
         }
         int x = cellX * CELL + 90 + r.nextInt(CELL - 180);
         int z = cellZ * CELL + 90 + r.nextInt(CELL - 180);
-        return new int[]{x, z, 55 + r.nextInt(35)};
+        int radius = 55 + r.nextInt(35);
+        boolean dry = DRY.computeIfAbsent(ChunkPos.asLong(cellX, cellZ), k -> {
+            Holder<Biome> biome = level.getBiome(new BlockPos(x, level.getSeaLevel() + 1, z));
+            return !biome.is(BiomeTags.IS_OCEAN) && !biome.is(BiomeTags.IS_RIVER) && !biome.is(BiomeTags.IS_BEACH);
+        });
+        return dry ? new int[]{x, z, radius} : null;
     }
 
     /** 0 outside, up to 1 in the middle of a field. */
-    public static double strength(long seed, int x, int z) {
-        int[] f = field(seed, Math.floorDiv(x, CELL), Math.floorDiv(z, CELL));
+    public static double strength(ServerLevel level, int x, int z) {
+        int[] f = field(level, Math.floorDiv(x, CELL), Math.floorDiv(z, CELL));
         if (f == null) {
             return 0.0D;
         }
@@ -41,7 +57,7 @@ public final class FlowerFields {
     }
 
     public static boolean inside(ServerLevel level, double x, double z) {
-        return strength(level.getSeed(), (int) Math.floor(x), (int) Math.floor(z)) > 0.0D;
+        return strength(level, (int) Math.floor(x), (int) Math.floor(z)) > 0.0D;
     }
 
     /** Centre of the closest field (searches a few cells around). */
@@ -52,7 +68,7 @@ public final class FlowerFields {
         double bestD = Double.MAX_VALUE;
         for (int dx = -12; dx <= 12; dx++) {
             for (int dz = -12; dz <= 12; dz++) {
-                int[] f = field(seed, cx + dx, cz + dz);
+                int[] f = field(level, cx + dx, cz + dz);
                 if (f == null) {
                     continue;
                 }
@@ -75,8 +91,8 @@ public final class FlowerFields {
         for (int cx = pcx - 7; cx <= pcx + 7 && done < 6; cx++) {
             for (int cz = pcz - 7; cz <= pcz + 7 && done < 6; cz++) {
                 int x0 = cx << 4, z0 = cz << 4;
-                if (!(strength(seed, x0, z0) > 0 || strength(seed, x0 + 15, z0) > 0 || strength(seed, x0, z0 + 15) > 0
-                        || strength(seed, x0 + 15, z0 + 15) > 0 || strength(seed, x0 + 8, z0 + 8) > 0)) {
+                if (!(strength(overworld, x0, z0) > 0 || strength(overworld, x0 + 15, z0) > 0 || strength(overworld, x0, z0 + 15) > 0
+                        || strength(overworld, x0 + 15, z0 + 15) > 0 || strength(overworld, x0 + 8, z0 + 8) > 0)) {
                     continue;
                 }
                 long key = ChunkPos.asLong(cx, cz);
@@ -100,7 +116,7 @@ public final class FlowerFields {
         for (int dx = 0; dx < 16; dx++) {
             for (int dz = 0; dz < 16; dz++) {
                 int x = cp.getMinBlockX() + dx, z = cp.getMinBlockZ() + dz;
-                double s = strength(seed, x, z);
+                double s = strength(level, x, z);
                 if (s <= 0.0D) {
                     continue;
                 }

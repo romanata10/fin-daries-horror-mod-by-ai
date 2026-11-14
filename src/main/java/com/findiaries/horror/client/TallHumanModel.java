@@ -67,6 +67,10 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         return LayerDefinition.create(mesh, 64, 64);
     }
 
+    public boolean glows() {
+        return this.shape.horns;
+    }
+
     private static void place(ModelPart part, float x, float y, float sx, float sy, float sz) {
         part.x = x;
         part.y = y;

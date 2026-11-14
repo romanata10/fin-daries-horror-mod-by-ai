@@ -141,7 +141,8 @@ public final class ClientPhenomena {
     // ---------------------------------------------------------------------------------------------
 
     private static boolean inDream(Minecraft mc) {
-        return mc.level != null && mc.level.dimension().location().getNamespace().equals(FinDiaries.MODID);
+        return mc.level != null && mc.level.dimension().location().getNamespace().equals(FinDiaries.MODID)
+                && !mc.level.dimension().location().getPath().equals("hellway");
     }
 
     private static boolean lyingTriangle() {

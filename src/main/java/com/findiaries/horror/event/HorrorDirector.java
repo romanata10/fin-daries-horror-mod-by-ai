@@ -152,6 +152,7 @@ public final class HorrorDirector {
     public static void onServerStopped(ServerStoppedEvent event) {
         TASKS.clear();
         Journey.clear();
+        FlowerFields.clear();
     }
 
     @SubscribeEvent
