@@ -1,0 +1,15 @@
+{
+  "block.findiaries.wonderland_portal": "wonderland.avi",
+  "block.findiaries.hall_portal": "Проход",
+  "block.findiaries.dots_portal": "Точки",
+  "block.findiaries.white_portal": "Выход",
+  "entity.findiaries.kill000145236": "kill000145236",
+  "entity.findiaries.watcher": "???",
+  "entity.findiaries.danger_12": "danger_12",
+  "entity.findiaries.blue_stranger": "Синий странник",
+  "subtitles.findiaries.chirp": "Что-то стрекочет в небе",
+  "subtitles.findiaries.hum": "Низкий гул",
+  "subtitles.findiaries.steps": "Быстрые шаги",
+  "advancements.findiaries.alive.title": "alive",
+  "advancements.findiaries.alive.description": "Ты вышел из cage_wonderland."
+}

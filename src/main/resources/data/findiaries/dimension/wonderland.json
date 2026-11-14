@@ -1,0 +1,11 @@
+{
+  "type": "findiaries:wonderland",
+  "generator": {
+    "type": "findiaries:dream",
+    "style": "wonderland",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "findiaries:wonderland"
+    }
+  }
+}

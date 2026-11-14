@@ -1,0 +1,11 @@
+{
+  "type": "findiaries:hallway",
+  "generator": {
+    "type": "findiaries:dream",
+    "style": "void",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "findiaries:hallway"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "findiaries:cage_wonderland",
+  "generator": {
+    "type": "findiaries:dream",
+    "style": "cage",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "findiaries:cage_wonderland"
+    }
+  }
+}
