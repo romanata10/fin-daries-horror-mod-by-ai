@@ -437,22 +437,22 @@ public final class ClientPhenomena {
         double k = Math.min(1.0D, 100.0D / (Math.sqrt(dx * dx + dy * dy + dz * dz) + 430.0D));
         g.begin(dx * k, dy * k, dz * k, 0.0D, 1.0D, k, fade(t, 300, 24.0F));
         final int body = 0x171820, head = 0x0B0C11;
-        g.box(-30, 0, -14, 30, 690, 14, body, true);
-        g.box(-42, 690, -18, 42, 860, 18, head, true);
-        g.beam(-30, 850, 0, -78, 940, -10, 8, body);
-        g.beam(30, 850, 0, 78, 940, -10, 8, body);
-        g.box(-30, 810, 19, -12, 826, 21, 0xFF8A22, false);
-        g.box(12, 810, 19, 30, 826, 21, 0xFF8A22, false);
+        g.box(-60, 0, -20, 60, 690, 20, 0x25262E, true);
+        g.box(-80, 690, -24, 80, 860, 24, 0x15161C, true);
+        g.beam(-60, 850, 0, -140, 940, -10, 12, 0x25262E);
+        g.beam(60, 850, 0, 140, 940, -10, 12, 0x25262E);
+        g.box(-60, 810, 25, -24, 832, 27, 0xFF8A22, false);
+        g.box(24, 810, 25, 60, 832, 27, 0xFF8A22, false);
         double open = t < 110 ? 3.0D : Math.min(64.0D, (t - 110) * 1.4D);
-        g.box(-26, 742, 19, 26, 742 + open, 21, 0x020203, false);
+        g.box(-52, 742, 25, 52, 742 + open, 27, 0x020203, false);
         if (t >= 130 && t < 225) {
-            g.beam(0, 742, 22, 0, -40, 22, 20, 0xFF6A12);
-            g.beam(0, 742, 22, 0, -40, 22, 42, 0xFFB840);
+            g.beam(0, 742, 28, 0, -40, 28, 20, 0xFF6A12);
+            g.beam(0, 742, 28, 0, -40, 28, 42, 0xFFB840);
         }
         if (t >= 215) {
-            double burst = Math.min(1.0D, (t - 215) / 28.0D) * 280.0D;
-            g.quad(-burst, -20, 0, burst, -20, 0, burst, burst * 0.65D, 0, -burst, burst * 0.65D, 0, 0xFFB03C, 0.85F);
-            g.quad(0, -20, -burst, 0, -20, burst, 0, burst * 0.65D, burst, 0, burst * 0.65D, -burst, 0xFFE0A0, 0.85F);
+            double burst = Math.min(1.0D, (t - 215) / 28.0D) * 150.0D;
+            g.quad(-burst, -10, 0, burst, -10, 0, burst, burst * 0.35D, 0, -burst, burst * 0.35D, 0, 0xFFB03C, 0.8F);
+            g.quad(0, -10, -burst, 0, -10, burst, 0, burst * 0.35D, burst, 0, burst * 0.35D, -burst, 0xFFE0A0, 0.8F);
         }
     }
 

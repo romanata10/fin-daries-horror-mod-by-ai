@@ -292,8 +292,9 @@ public final class Journey {
         if (giant == null) {
             return;
         }
-        giant.moveTo(DreamChunkGenerator.HELL_WIDTH / 2.0D, DreamChunkGenerator.HELL_FLOOR,
-                player.getZ() - 32.0D, 0.0F, 0.0F);
+        double z = player.getZ() - 14.0D;
+        level.getChunk((int) Math.floor(z) >> 4, player.getBlockX() >> 4);
+        giant.moveTo(DreamChunkGenerator.HELL_WIDTH / 2.0D, DreamChunkGenerator.HELL_FLOOR, z, 0.0F, 0.0F);
         level.addFreshEntity(giant);
     }
 

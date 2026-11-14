@@ -329,8 +329,11 @@ public final class ClientSmoke {
         });
         step(2, () -> server(p -> {
             clearMobs(p);
+            ServerLevel level = p.serverLevel();
+            level.getChunk(0, -1);
+            level.getChunk(0, -2);
             fly(p, 2.0D, DreamChunkGenerator.HELL_FLOOR, 0.5D, 180.0F, -8.0F);
-            Journey.spawnGiant(p.serverLevel(), p);
+            Journey.spawnGiant(level, p);
         }));
         step(50, () -> shot("36_one_eye_giant"));
         // ---- the 860 block Nevelim ----
@@ -340,8 +343,8 @@ public final class ClientSmoke {
             ClientPhenomena.debugClear();
         });
         step(2, () -> {
-            server(p -> fly(p, p.getX(), p.getY() + 8.0D, p.getZ(), 0.0F, -12.0F));
-            ClientPhenomena.debugShow(ahead(PhenomenonPacket.GIANT_NEVELIM, -110.0D, 0.0D), 152);
+            server(p -> fly(p, p.getX(), p.getY() + 8.0D, p.getZ(), 0.0F, -20.0F));
+            ClientPhenomena.debugShow(ahead(PhenomenonPacket.GIANT_NEVELIM, -700.0D, 0.0D), 152);
         });
         step(45, () -> shot("37_giant_nevelim"));
         step(70, () -> shot("37b_giant_explosion"));
