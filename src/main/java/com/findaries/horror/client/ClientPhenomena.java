@@ -446,13 +446,13 @@ public final class ClientPhenomena {
         double open = t < 110 ? 3.0D : Math.min(64.0D, (t - 110) * 1.4D);
         g.box(-52, 742, 25, 52, 742 + open, 27, 0x020203, false);
         if (t >= 130 && t < 225) {
-            g.beam(0, 742, 28, 0, -40, 28, 20, 0xFF6A12);
-            g.beam(0, 742, 28, 0, -40, 28, 42, 0xFFB840);
+            g.box(-34, -40, 30, 34, 742, 32, 0xFF6A12, false);
+            g.box(-14, -40, 33, 14, 742, 35, 0xFFC060, false);
         }
         if (t >= 215) {
-            double burst = Math.min(1.0D, (t - 215) / 28.0D) * 150.0D;
-            g.quad(-burst, -10, 0, burst, -10, 0, burst, burst * 0.35D, 0, -burst, burst * 0.35D, 0, 0xFFB03C, 0.8F);
-            g.quad(0, -10, -burst, 0, -10, burst, 0, burst * 0.35D, burst, 0, burst * 0.35D, -burst, 0xFFE0A0, 0.8F);
+            double burst = Math.min(1.0D, (t - 215) / 28.0D) * 420.0D;
+            g.quad(-burst, -10, 0, burst, -10, 0, burst, burst * 0.55D, 0, -burst, burst * 0.55D, 0, 0xFFB03C, 0.9F);
+            g.quad(0, -10, -burst, 0, -10, burst, 0, burst * 0.55D, burst, 0, burst * 0.55D, -burst, 0xFFE0A0, 0.9F);
         }
     }
 

@@ -366,7 +366,7 @@ public final class ClientSmoke {
             });
         });
         step(70, () -> shot("38_wrong_house_hole"));
-        step(2, () -> server(p -> fly(p, holeX + 0.5D, holeY + 7.0D, holeZ - 10.0D, 0.0F, 32.0F)));
+        step(2, () -> server(p -> fly(p, holeX + 0.5D, holeY + 14.0D, holeZ - 1.0D, 0.0F, 68.0F)));
         step(60, () -> shot("38b_hole"));
         // ---- thrown to the main menu ----
         step(40, () -> server(Net::kick));

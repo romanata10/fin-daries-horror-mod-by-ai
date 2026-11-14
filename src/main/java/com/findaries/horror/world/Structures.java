@@ -489,6 +489,17 @@ public final class Structures {
             }
         }
         set(level, x, y - 3, z, ModRegistry.DOOR_PORTAL.get().defaultBlockState());
+        // clear the trees / grass above so the hole is visible from the sky
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                for (int dy = 1; dy <= 6; dy++) {
+                    BlockState above = level.getBlockState(new BlockPos(x + dx, y + dy, z + dz));
+                    if (!above.isAir() && !above.is(Blocks.BEDROCK)) {
+                        set(level, x + dx, y + dy, z + dz, AIR);
+                    }
+                }
+            }
+        }
         // a cracked rim
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
