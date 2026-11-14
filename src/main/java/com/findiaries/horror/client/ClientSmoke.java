@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 public final class ClientSmoke {
     private static final boolean ENABLED = Boolean.getBoolean("findiaries.smoke");
 
-    private record Step(int wait, Runnable run) {
+    private record Step(int delay, Runnable run) {
     }
 
     private static final List<Step> STEPS = new ArrayList<>();
@@ -51,8 +51,8 @@ public final class ClientSmoke {
     private static int index;
     private static int timer;
 
-    private static void step(int wait, Runnable run) {
-        STEPS.add(new Step(wait, run));
+    private static void step(int delay, Runnable run) {
+        STEPS.add(new Step(delay, run));
     }
 
     private static void server(Consumer<ServerPlayer> action) {
@@ -254,7 +254,7 @@ public final class ClientSmoke {
                     throw new IllegalStateException("CLIENT SMOKE: left the world at step " + index);
                 }
                 Step s = STEPS.get(index);
-                if (++timer >= s.wait) {
+                if (++timer >= s.delay) {
                     timer = 0;
                     index++;
                     s.run.run();
