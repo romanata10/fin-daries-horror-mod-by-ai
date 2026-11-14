@@ -343,8 +343,8 @@ public final class ClientSmoke {
             ClientPhenomena.debugClear();
         });
         step(2, () -> {
-            server(p -> fly(p, p.getX(), p.getY() + 8.0D, p.getZ(), 0.0F, -20.0F));
-            ClientPhenomena.debugShow(ahead(PhenomenonPacket.GIANT_NEVELIM, -700.0D, 0.0D), 152);
+            server(p -> fly(p, p.getX(), p.getY() + 8.0D, p.getZ(), 0.0F, -12.0F));
+            ClientPhenomena.debugShow(ahead(PhenomenonPacket.GIANT_NEVELIM, -2000.0D, 0.0D), 152);
         });
         step(45, () -> shot("37_giant_nevelim"));
         step(70, () -> shot("37b_giant_explosion"));
@@ -363,6 +363,8 @@ public final class ClientSmoke {
             });
         });
         step(70, () -> shot("38_wrong_house_hole"));
+        step(2, () -> server(p -> fly(p, p.getBlockX() + 15.5D, p.getY(), p.getBlockZ() + 8.0D, 0.0F, 28.0F)));
+        step(60, () -> shot("38b_hole"));
         // ---- thrown to the main menu ----
         step(40, () -> server(Net::kick));
     }

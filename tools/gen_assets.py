@@ -484,7 +484,6 @@ for nm, fn in (('event_triangle', i_triangle), ('event_triangle_wanderer', i_wan
                ('event_hell_portal', i_hell), ('event_wrong_house', i_house), ('event_spaceship', i_ship),
                ('event_flower_man', i_flowerman)):
     icon(nm, fn)
-print('0.3.0 assets written')
 
 # =====================================================================================================
 # update 0.4.0
