@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:oak_door"
+    },
+    "title": {
+      "translate": "advancements.findaries.wrong_place_wrong_time.title"
+    },
+    "description": {
+      "translate": "advancements.findaries.wrong_place_wrong_time.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false,
+    "background": "minecraft:textures/block/oak_planks.png"
+  },
+  "criteria": {
+    "escaped": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

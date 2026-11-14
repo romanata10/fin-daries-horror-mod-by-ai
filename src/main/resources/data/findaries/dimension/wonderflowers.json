@@ -1,0 +1,11 @@
+{
+  "type": "findaries:wonderflowers",
+  "generator": {
+    "type": "findaries:dream",
+    "style": "wonderflowers",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "findaries:wonderflowers"
+    }
+  }
+}

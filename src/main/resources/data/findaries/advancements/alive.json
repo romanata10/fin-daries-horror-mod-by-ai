@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:poppy"
+    },
+    "title": {
+      "translate": "advancements.findaries.alive.title"
+    },
+    "description": {
+      "translate": "advancements.findaries.alive.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false,
+    "background": "minecraft:textures/block/oak_planks.png"
+  },
+  "criteria": {
+    "escaped": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

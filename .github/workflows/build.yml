@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: findiaries-mod
+          name: findaries-mod
           path: build/libs/*.jar
 
       - name: Server self-test
@@ -38,7 +38,7 @@ jobs:
           echo eula=true > run/eula.txt
           printf 'max-tick-time=-1\nonline-mode=false\nlevel-seed=20240613\nview-distance=4\n' > run/server.properties
           FD_SMOKE=1 timeout 1200 ./gradlew runServer --console=plain 2>&1 | tee server.log
-          grep -q "FINDIARIES SMOKE: OK" server.log
+          grep -q "FINDARIES SMOKE: OK" server.log
 
       - name: Client self-test
         id: client
@@ -49,7 +49,7 @@ jobs:
           printf 'onboardAccessibility:false\npauseOnLostFocus:false\nrenderDistance:10\nsimulationDistance:6\ntutorialStep:none\nsoundCategory_master:0.0\nnarrator:0\nfov:0.0\nmaxFps:60\ngraphicsMode:1\nrenderClouds:"true"\n' > run/options.txt
           rm -rf run/saves/fd_smoke
           FD_SMOKE=1 timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runClient --console=plain 2>&1 | tee client.log
-          grep -q "FINDIARIES CLIENT SMOKE: OK" client.log
+          grep -q "FINDARIES CLIENT SMOKE: OK" client.log
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -60,3 +60,28 @@ jobs:
             run/screenshots/*.png
             run/logs/latest.log
             run/crash-reports/*
+      - name: Report
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          SHA="${{ github.sha }}"
+          REPO="${{ github.repository }}"
+          post() { gh api "repos/$REPO/commits/$SHA/comments" -f "body=$1" > /dev/null 2>&1; }
+          for f in build.log server.log client.log; do
+            if [ -f "$f" ]; then
+              body=$(printf 'LOG:%s\n%s' "$f" "$(tail -c 7000 "$f")")
+              post "$body"
+            fi
+          done
+          sudo apt-get install -y -qq imagemagick > /dev/null 2>&1
+          mkdir -p /tmp/thumbs
+          for png in run/screenshots/*.png; do
+            [ -f "$png" ] || continue
+            n=$(basename "$png" .png)
+            convert "$png" -resize 560x315 -quality 62 "/tmp/thumbs/$n.jpg" 2>/dev/null || continue
+            b64=$(base64 -w0 "/tmp/thumbs/$n.jpg")
+            post "SHOT:$n:$b64"
+          done
+          exit 0

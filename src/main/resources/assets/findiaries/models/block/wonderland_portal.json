@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "findiaries:block/wonderland_portal",
-    "particle": "findiaries:block/wonderland_portal"
-  },
-  "render_type": "minecraft:translucent"
-}

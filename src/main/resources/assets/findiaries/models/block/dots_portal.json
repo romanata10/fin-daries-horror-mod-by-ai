@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "findiaries:block/dots_portal",
-    "particle": "findiaries:block/dots_portal"
-  },
-  "render_type": "minecraft:translucent"
-}

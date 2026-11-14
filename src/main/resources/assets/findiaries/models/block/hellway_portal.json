@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "findiaries:block/hellway_portal",
-    "particle": "findiaries:block/hellway_portal"
-  },
-  "render_type": "minecraft:translucent"
-}

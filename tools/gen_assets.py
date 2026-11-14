@@ -12,7 +12,7 @@ import numpy as np
 import soundfile as sf
 from PIL import Image
 
-ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'main', 'resources', 'assets', 'findiaries')
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'src', 'main', 'resources', 'assets', 'findaries')
 TEX_BLOCK = os.path.join(ROOT, 'textures', 'block')
 TEX_ENTITY = os.path.join(ROOT, 'textures', 'entity')
 SOUNDS = os.path.join(ROOT, 'sounds')
@@ -485,3 +485,224 @@ for nm, fn in (('event_triangle', i_triangle), ('event_triangle_wanderer', i_wan
                ('event_flower_man', i_flowerman)):
     icon(nm, fn)
 print('0.3.0 assets written')
+
+# =====================================================================================================
+# update 0.4.0
+# =====================================================================================================
+rnd4 = random.Random(4040)
+
+
+def flat_img(w, h, colour):
+    im = Image.new('RGBA', (w, h), colour + (255,))
+    return im
+
+
+def noise_region(im, box, base, jitter=10):
+    x0, y0, x1, y1 = box
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            j = rnd4.randint(-jitter, jitter)
+            im.putpixel((x, y), tuple(max(0, min(255, c + j)) for c in base) + (255,))
+
+
+# ---- Flower Man, 128x128 layout: tall earth/grass column + yellow flower + green legs ----
+fm4 = flat_img(128, 128, (121, 85, 58))
+noise_region(fm4, (0, 0, 64, 48), (121, 85, 58), 16)
+# grass on the top face and a ragged green rim down the sides
+for y in range(0, 7):
+    noise_region(fm4, (0, y, 64, y + 1), (86, 152, 52), 14)
+for x in range(64):
+    drip = rnd4.randint(2, 6)
+    for y in range(7, 7 + drip):
+        fm4.putpixel((x, y), (70 + rnd4.randint(-12, 12), 130 + rnd4.randint(-16, 16), 45 + rnd4.randint(-10, 10), 255))
+# paths of roots/veins through the column
+fd = ImageDraw.Draw(fm4)
+for _ in range(26):
+    x = rnd4.randrange(64)
+    y = rnd4.randrange(10, 46)
+    fd.line([(x, y), (x + rnd4.randint(-4, 4), y + rnd4.randint(2, 6))], fill=(84, 56, 34, 255))
+# long green legs (0,64)-(12,97)
+noise_region(fm4, (0, 64, 12, 97), (62, 132, 42), 10)
+fd.line([(5, 64), (5, 97)], fill=(40, 96, 30, 255))
+# yellow petals (16,64)-(44,71)
+noise_region(fm4, (16, 64, 44, 71), (250, 216, 34), 12)
+for x in range(16, 44):
+    if x % 7 == 0:
+        fm4.putpixel((x, 64), (255, 240, 90, 255))
+# orange core (48,64)-(64,72)
+noise_region(fm4, (48, 64, 64, 72), (230, 152, 24), 12)
+# green stem (64,64)-(72,78)
+noise_region(fm4, (64, 64, 72, 78), (48, 120, 36), 8)
+fm4.save(os.path.join(TEX_ENTITY, 'flower_man.png'))
+
+# ---- Red Demon: very thin red-black figure with glowing eyes and horns ----
+skin('red_demon', (44, 5, 6), 7, patches=[
+    (8, 0, 16, 8, (16, 1, 2)),
+    (9, 10, 11, 13, (255, 226, 120)), (13, 10, 15, 13, (255, 226, 120)),
+    (9, 13, 15, 15, (10, 0, 0)),
+    (20, 20, 28, 21, (150, 18, 14)), (20, 24, 28, 25, (150, 18, 14)),
+    (20, 28, 28, 29, (150, 18, 14)), (20, 31, 28, 32, (150, 18, 14)),
+    (0, 16, 64, 18, (24, 2, 3)),
+])
+import shutil  # noqa: E402
+shutil.copyfile(os.path.join(TEX_ENTITY, 'red_demon.png'), os.path.join(TEX_ENTITY, 'cave_demon.png'))
+
+# ---- the other new entities ----
+skin('pillar', (96, 70, 42), 8, patches=[
+    (8, 8, 16, 14, (74, 52, 30)),
+    (9, 11, 11, 12, (240, 238, 226)), (13, 11, 15, 12, (240, 238, 226)),
+])
+skin('fake_player', (60, 110, 70), 6, patches=[
+    (8, 0, 16, 8, (52, 36, 24)),
+    (9, 11, 11, 13, (240, 240, 240)), (13, 11, 15, 13, (240, 240, 240)),
+])
+# one-eyed giant: dark grey, one huge yellow eye on the head front
+skin('one_eye_giant', (30, 32, 40), 8, patches=[
+    (8, 0, 16, 16, (22, 23, 29)),
+    (9, 9, 15, 13, (236, 210, 60)), (11, 10, 13, 12, (20, 10, 10)),
+    (20, 20, 28, 32, (26, 27, 34)),
+])
+# Nevelim: thin pale figure
+skin('nevelim', (214, 219, 228), 6, patches=[
+    (8, 0, 16, 16, (196, 202, 214)),
+    (9, 11, 11, 13, (20, 22, 28)), (13, 11, 15, 13, (20, 22, 28)),
+])
+# Eye object: giant white eyeball on every face of the head
+eye4 = flat_img(64, 64, (238, 238, 232))
+ed = ImageDraw.Draw(eye4)
+# head front/back/sides in the 64x64 skin layout
+for (x0, y0) in ((8, 8), (24, 8), (0, 8), (16, 8)):
+    ed.ellipse([x0, y0, x0 + 7, y0 + 7], fill=(250, 250, 246, 255))
+    ed.ellipse([x0 + 2, y0 + 2, x0 + 5, y0 + 5], fill=(120, 20, 30, 255))
+    ed.ellipse([x0 + 3, y0 + 3, x0 + 4, y0 + 4], fill=(12, 12, 14, 255))
+noise_region(eye4, (0, 16, 64, 64), (226, 226, 220), 4)
+eye4.save(os.path.join(TEX_ENTITY, 'eye.png'))
+
+# ---- new block textures ----
+def block(name, painter, size=16):
+    im = Image.new('RGBA', (size, size))
+    for y in range(size):
+        for x in range(size):
+            im.putpixel((x, y), painter(x, y))
+    im.save(os.path.join(TEX_BLOCK, name + '.png'))
+
+
+def door_pixel(x, y):
+    v = 150 + rnd4.randint(-12, 12)
+    wood = (v, int(v * 0.68), int(v * 0.38), 255)
+    if x in (0, 15) or y in (0, 7, 8, 15):
+        return (92, 60, 32, 255)
+    if 3 <= x <= 12 and 2 <= y <= 6:
+        return (150, 190, 220, 255) if 4 <= x <= 11 and 3 <= y <= 5 else (70, 48, 26, 255)
+    if 11 <= x <= 13 and y in (9, 10):
+        return (210, 190, 70, 255)
+    return wood
+
+
+block('door_portal', door_pixel)
+
+
+def freedom_pixel(x, y):
+    v = 230 + rnd4.randint(-18, 18)
+    edge = min(x, y, 15 - x, 15 - y)
+    if edge < 2:
+        return (120, 88, 54, 255)
+    return (min(255, v), min(255, v), min(255, v - 10), 255)
+
+
+block('freedom_portal', freedom_pixel)
+
+
+def wonderdream_pixel(x, y):
+    v = 120 + int(26 * np.sin(x * 0.7 + y * 0.35)) + rnd4.randint(-6, 6)
+    return (min(255, v + 30), min(255, int(v * 0.7)), min(255, int(v * 0.42)), 255)
+
+
+block('wonderdream_portal', wonderdream_pixel)
+
+# ---- new event icons, plus 0.4 looks for the cones ----
+def icon4(name, painter):
+    im = Image.new('RGBA', (16, 16))
+    painter(ImageDraw.Draw(im), im)
+    im.save(os.path.join(TEX_ITEM, name + '.png'))
+
+
+def i_cone(dr, im):
+    dr.polygon([(1, 3), (14, 3), (8, 15)], fill=(6, 7, 11, 255))
+    dr.line([(1, 3), (14, 3)], fill=(30, 33, 40, 255))
+
+
+def i_cone_eyes(dr, im):
+    i_cone(dr, im)
+    dr.ellipse([4, 5, 6, 6], fill=(250, 248, 240, 255))
+    dr.ellipse([9, 5, 11, 6], fill=(250, 248, 240, 255))
+
+
+def i_cone_lying(dr, im):
+    dr.polygon([(1, 8), (1, 4), (14, 11)], fill=(6, 7, 11, 255))
+    dr.line([(1, 4), (1, 8)], fill=(30, 33, 40, 255))
+
+
+def i_star4(dr, im):
+    dr.polygon([(8, 0), (10, 6), (15, 8), (10, 10), (8, 15), (6, 10), (0, 8), (6, 6)],
+               fill=(176, 224, 255, 255))
+
+
+def i_pillar4(dr, im):
+    dr.rectangle([5, 1, 10, 15], fill=(110, 80, 48, 255))
+    dr.point([(6, 4), (9, 4)], fill=(245, 242, 230, 255))
+    dr.rectangle([6, 9, 9, 12], fill=(230, 60, 20, 255))
+
+
+def i_hole4(dr, im):
+    dr.rectangle([0, 0, 15, 15], fill=(96, 96, 92, 255))
+    dr.ellipse([3, 4, 12, 13], fill=(8, 8, 10, 255))
+    dr.rectangle([5, 12, 10, 13], fill=(70, 20, 20, 255))
+
+
+def i_demon4(dr, im):
+    dr.polygon([(7, 0), (8, 4), (10, 0)], fill=(18, 2, 2, 255))
+    dr.rectangle([6, 4, 9, 15], fill=(86, 8, 8, 255))
+    dr.point([(7, 5), (9, 5)], fill=(255, 220, 100, 255))
+
+
+def i_nevelim4(dr, im):
+    dr.rectangle([7, 1, 8, 15], fill=(214, 220, 230, 255))
+    dr.line([(4, 5), (11, 5)], fill=(214, 220, 230, 255))
+    dr.point([(7, 3), (8, 3)], fill=(20, 22, 28, 255))
+
+
+def i_eye4(dr, im):
+    dr.ellipse([1, 3, 14, 12], fill=(245, 245, 240, 255))
+    dr.ellipse([5, 4, 10, 11], fill=(130, 20, 30, 255))
+    dr.ellipse([7, 6, 8, 9], fill=(10, 10, 12, 255))
+
+
+def i_giant4(dr, im):
+    dr.rectangle([6, 0, 9, 15], fill=(18, 18, 24, 255))
+    dr.rectangle([5, 0, 10, 3], fill=(18, 18, 24, 255))
+    dr.point([(6, 1), (9, 1)], fill=(255, 140, 30, 255))
+    dr.line([(8, 3), (8, 14)], fill=(255, 140, 30, 255))
+
+
+def i_fake4(dr, im):
+    dr.rectangle([4, 2, 11, 10], fill=(190, 145, 110, 255))
+    dr.rectangle([4, 2, 11, 4], fill=(48, 32, 20, 255))
+    dr.point([(6, 6), (9, 6)], fill=(40, 40, 40, 255))
+    dr.rectangle([4, 10, 11, 15], fill=(60, 110, 70, 255))
+
+
+def i_one_eye4(dr, im):
+    dr.rectangle([3, 1, 12, 14], fill=(28, 29, 36, 255))
+    dr.ellipse([5, 4, 10, 9], fill=(236, 210, 60, 255))
+    dr.ellipse([7, 5, 8, 8], fill=(20, 10, 10, 255))
+
+
+for nm, fn in (('event_triangle', i_cone), ('event_triangle_eyes', i_cone_eyes),
+               ('event_triangle_lying', i_cone_lying), ('event_triangle_star', i_star4),
+               ('event_pillar', i_pillar4), ('event_hole', i_hole4),
+               ('event_cave_demon', i_demon4), ('event_nevelim', i_nevelim4),
+               ('event_eye', i_eye4), ('event_giant_nevelim', i_giant4),
+               ('event_fake_player', i_fake4), ('event_one_eye_giant', i_one_eye4)):
+    icon4(nm, fn)
+print('0.4.0 assets written')

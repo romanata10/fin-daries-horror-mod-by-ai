@@ -28,5 +28,5 @@ jobs:
         run: |
           gh release create "${{ github.ref_name }}" build/libs/*.jar \
             --repo "${{ github.repository }}" \
-            --title "Fin Diaries Horror ${{ github.ref_name }} (Forge 1.20.1)" \
+            --title "Fin Daries Horror ${{ github.ref_name }} (Forge 1.20.1)" \
             --notes-file .github/release-notes.md

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "findaries:block/white_portal",
+    "particle": "findaries:block/white_portal"
+  },
+  "render_type": "minecraft:translucent"
+}

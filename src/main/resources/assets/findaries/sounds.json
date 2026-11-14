@@ -1,0 +1,37 @@
+{
+  "chirp": {
+    "subtitle": "subtitles.findaries.chirp",
+    "sounds": [
+      {
+        "name": "findaries:chirp",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "hum": {
+    "subtitle": "subtitles.findaries.hum",
+    "sounds": [
+      {
+        "name": "findaries:hum",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "steps": {
+    "subtitle": "subtitles.findaries.steps",
+    "sounds": [
+      {
+        "name": "findaries:steps"
+      }
+    ]
+  },
+  "scream": {
+    "subtitle": "subtitles.findaries.scream",
+    "sounds": [
+      {
+        "name": "findaries:scream",
+        "attenuation_distance": 96
+      }
+    ]
+  }
+}

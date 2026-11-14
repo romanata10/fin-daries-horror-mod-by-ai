@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "half=lower": {
+      "model": "findaries:block/eye_flower_bottom"
+    },
+    "half=upper": {
+      "model": "findaries:block/eye_flower_top"
+    }
+  }
+}

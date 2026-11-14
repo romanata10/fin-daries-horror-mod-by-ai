@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "findaries:eye_flower"
+    },
+    "title": {
+      "translate": "advancements.findaries.root_in_hell.title"
+    },
+    "description": {
+      "translate": "advancements.findaries.root_in_hell.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false,
+    "background": "minecraft:textures/block/dirt.png"
+  },
+  "criteria": {
+    "found": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

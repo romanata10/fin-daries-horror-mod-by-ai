@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "findaries:block/eye_flower_bottom"
+  },
+  "render_type": "minecraft:cutout"
+}

@@ -32,7 +32,7 @@ minecraft {
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
             if (System.getenv('FD_SMOKE') != null) {
-                property 'findiaries.smoke', 'true'
+                property 'findaries.smoke', 'true'
             }
         }
 
@@ -42,7 +42,7 @@ minecraft {
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
             if (System.getenv('FD_SMOKE') != null) {
-                property 'findiaries.smoke', 'true'
+                property 'findaries.smoke', 'true'
             }
         }
     }

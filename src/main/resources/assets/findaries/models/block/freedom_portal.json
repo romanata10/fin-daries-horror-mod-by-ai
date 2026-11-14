@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "findaries:block/freedom_portal",
+    "particle": "findaries:block/freedom_portal"
+  },
+  "render_type": "minecraft:translucent"
+}

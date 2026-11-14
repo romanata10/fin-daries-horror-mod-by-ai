@@ -1,0 +1,11 @@
+{
+  "type": "findaries:hellway",
+  "generator": {
+    "type": "findaries:dream",
+    "style": "hellway",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "findaries:hellway"
+    }
+  }
+}

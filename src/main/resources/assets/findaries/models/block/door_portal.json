@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "findaries:block/door_portal",
+    "particle": "findaries:block/door_portal"
+  },
+  "render_type": "minecraft:translucent"
+}

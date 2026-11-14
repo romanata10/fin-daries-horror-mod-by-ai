@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "findiaries:red_cobblestone",
-    "findiaries:blood_cobblestone"
+    "findaries:red_cobblestone",
+    "findaries:blood_cobblestone"
   ]
 }

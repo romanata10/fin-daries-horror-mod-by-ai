@@ -1,0 +1,11 @@
+{
+  "type": "findaries:stonehell",
+  "generator": {
+    "type": "findaries:dream",
+    "style": "stonehell",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "findaries:stonehell"
+    }
+  }
+}
