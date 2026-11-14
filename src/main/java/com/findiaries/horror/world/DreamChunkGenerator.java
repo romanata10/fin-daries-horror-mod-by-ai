@@ -31,6 +31,7 @@ import java.util.concurrent.Executor;
  *   <li>wonderland - bright rolling hills, giant flowers, giant blocks, broken old trees</li>
  *   <li>wonderflowers - a field of giant poppies, a straight path, a river, an island</li>
  *   <li>cage - wooden walls, impossibly tall trees, hills and water</li>
+ *   <li>hellway - an endless tunnel of blood cobblestone, 4 wide and 12 high, with side rooms</li>
  *   <li>void - nothing (the corridor and the house are built by hand)</li>
  * </ul>
  * Everything is a pure function of the block coordinates, so features can freely cross chunk borders.
@@ -41,7 +42,7 @@ public class DreamChunkGenerator extends ChunkGenerator {
             Codec.STRING.fieldOf("style").forGetter(g -> g.styleName)
     ).apply(i, DreamChunkGenerator::new));
 
-    public enum Style { WONDERLAND, WONDERFLOWERS, CAGE, VOID }
+    public enum Style { WONDERLAND, WONDERFLOWERS, CAGE, HELLWAY, VOID }
 
     // ---- shared layout constants (also used by the hand-built structures) ----------------------
     public static final int GROUND = 64;
@@ -51,6 +52,9 @@ public class DreamChunkGenerator extends ChunkGenerator {
     public static final int RIVER_Z0 = 160, RIVER_Z1 = 232, ISLAND_Z = 196, ISLAND_R = 7, WF_WATER = 58;
     /** Cage: half size of the wooden box and the water level. */
     public static final int CAGE_R = 80, CAGE_WATER = 57, CAGE_WALL_TOP = 230;
+
+    /** Hellway: the tunnel runs along Z; a side room with a wonderland portal every HELL_ROOM_EVERY blocks. */
+    public static final int HELL_FLOOR = 64, HELL_HEIGHT = 12, HELL_WIDTH = 4, HELL_ROOM_EVERY = 128, HELL_ROOM_Z = 64;
 
     private final String styleName;
     private final Style style;
@@ -310,6 +314,7 @@ public class DreamChunkGenerator extends ChunkGenerator {
                 }
             }
             switch (this.style) {
+                case HELLWAY -> hellway(c);
                 case WONDERLAND -> wonderland(c);
                 case WONDERFLOWERS -> wonderflowers(c);
                 case CAGE -> cage(c);
@@ -318,6 +323,33 @@ public class DreamChunkGenerator extends ChunkGenerator {
             }
         }
         return CompletableFuture.completedFuture(chunk);
+    }
+
+    private static void hellway(Canvas c) {
+        BlockState blood = ModRegistry.BLOOD_COBBLESTONE.get().defaultBlockState();
+        BlockState red = ModRegistry.RED_COBBLESTONE.get().defaultBlockState();
+        BlockState portal = ModRegistry.WONDERLAND_PORTAL.get().defaultBlockState();
+        BlockState magma = Blocks.MAGMA_BLOCK.defaultBlockState();
+        for (int x = Math.max(c.minX, -6); x <= Math.min(c.maxX, 15); x++) {
+            for (int z = c.minZ; z <= c.maxZ; z++) {
+                int rel = Math.floorMod(z - HELL_ROOM_Z, HELL_ROOM_EVERY); // 0..5 = the room
+                for (int y = HELL_FLOOR - 6; y <= HELL_FLOOR + HELL_HEIGHT + 5; y++) {
+                    boolean tunnel = x >= 0 && x < HELL_WIDTH && y >= HELL_FLOOR && y < HELL_FLOOR + HELL_HEIGHT;
+                    boolean room = rel <= 5 && x >= 5 && x <= 9 && y >= HELL_FLOOR && y <= HELL_FLOOR + 3;
+                    boolean doorway = (rel == 2 || rel == 3) && x == 4 && y >= HELL_FLOOR && y <= HELL_FLOOR + 2;
+                    if (tunnel || room || doorway) {
+                        continue;
+                    }
+                    BlockState s = (hash(x + y * 131L, z, 666) & 7) < 3 ? blood : red;
+                    if ((rel == 2 || rel == 3) && x == 10 && y >= HELL_FLOOR && y <= HELL_FLOOR + 2) {
+                        s = portal;
+                    } else if ((x == -1 || x == HELL_WIDTH) && y == HELL_FLOOR + 2 && Math.floorMod(z, 14) == (x < 0 ? 0 : 7)) {
+                        s = magma; // faint glow in the walls
+                    }
+                    c.set(x, y, z, s);
+                }
+            }
+        }
     }
 
     private static boolean wonderlandReserved(int x, int z, int margin) {

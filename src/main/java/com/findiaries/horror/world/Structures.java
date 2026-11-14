@@ -142,12 +142,17 @@ public final class Structures {
     }
 
     public static ItemStack noteBook() {
+        return book("note", "wonderland.avi", NOTE);
+    }
+
+    /** A written book with a single page. */
+    public static ItemStack book(String title, String author, String text) {
         ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
         CompoundTag tag = book.getOrCreateTag();
-        tag.putString("title", "note");
-        tag.putString("author", "wonderland.avi");
+        tag.putString("title", title);
+        tag.putString("author", author);
         ListTag pages = new ListTag();
-        pages.add(StringTag.valueOf(Component.Serializer.toJson(Component.literal(NOTE))));
+        pages.add(StringTag.valueOf(Component.Serializer.toJson(Component.literal(text))));
         tag.put("pages", pages);
         return book;
     }
@@ -300,6 +305,196 @@ public final class Structures {
                 .setValue(DoorBlock.OPEN, open);
         set(level, 0, HALL_Y + 1, z, door.setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER));
         set(level, 0, HALL_Y + 2, z, door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER));
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // overworld structures of the second update
+    // ---------------------------------------------------------------------------------------------
+
+    public static final int CASTLE_HALF = 11;
+
+    private static BlockState castleStone(int x, int y, int z) {
+        long h = DreamChunkGenerator.hash(x, z, y * 31L + 9);
+        return (h & 7) < 2 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState();
+    }
+
+    /** Cobblestone castle: outer wall with corner towers, a gate and a keep. {@code y} = first free block above ground. */
+    public static void buildCastle(ServerLevel level, int cx, int y, int cz) {
+        final int half = CASTLE_HALF;
+        for (int dx = -half; dx <= half; dx++) {
+            for (int dz = -half; dz <= half; dz++) {
+                int x = cx + dx, z = cz + dz;
+                int ax = Math.abs(dx), az = Math.abs(dz);
+                // foundation and floor
+                for (int yy = y - 5; yy < y; yy++) {
+                    set(level, x, yy, z, castleStone(x, yy, z));
+                }
+                boolean tower = ax >= half - 3 && az >= half - 3;
+                boolean towerInside = tower && ax >= half - 2 && ax <= half - 1 && az >= half - 2 && az <= half - 1;
+                boolean wall = !tower && (ax == half - 1 || az == half - 1);
+                boolean outside = !tower && (ax == half || az == half);
+                boolean gate = dz == -(half - 1) && ax <= 1;
+                boolean keepWall = (ax == 4 && az <= 4) || (az == 4 && ax <= 4);
+                boolean keepInside = ax < 4 && az < 4;
+                boolean keepDoor = dz == -4 && dx == 0;
+                for (int dy = 0; dy <= 15; dy++) {
+                    BlockState s = AIR;
+                    if (outside) {
+                        continue; // leave the terrain around the walls alone
+                    }
+                    if (tower) {
+                        if (dy <= 10) {
+                            s = towerInside && dy > 0 && dy < 10 ? AIR : castleStone(x, y + dy, z);
+                        } else if (dy == 11 && !towerInside && ((ax + az) & 1) == 0) {
+                            s = castleStone(x, y + dy, z);
+                        }
+                    } else if (wall) {
+                        if (gate && dy <= 3) {
+                            s = AIR;
+                        } else if (dy <= 6 || (dy == 7 && ((dx + dz) & 1) == 0)) {
+                            s = castleStone(x, y + dy, z);
+                        }
+                    } else if (keepWall) {
+                        if (keepDoor && dy <= 1) {
+                            s = AIR;
+                        } else if (dy <= 8 && !(dy >= 5 && dy <= 6 && (dx == 0 || dz == 0) && !(dx == 0 && dz == -4 && dy < 5))) {
+                            s = castleStone(x, y + dy, z);
+                        } else if (dy == 9 && ((dx + dz) & 1) == 0) {
+                            s = castleStone(x, y + dy, z);
+                        }
+                    } else if (keepInside && dy == 8) {
+                        s = castleStone(x, y + dy, z);
+                    }
+                    set(level, x, y + dy, z, s);
+                }
+            }
+        }
+        // a little light, not much
+        set(level, cx - 3, y, cz + 3, Blocks.TORCH.defaultBlockState());
+        set(level, cx + 3, y, cz + 3, Blocks.TORCH.defaultBlockState());
+        set(level, cx - 6, y, cz - 6, Blocks.TORCH.defaultBlockState());
+        set(level, cx + 6, y, cz - 6, Blocks.TORCH.defaultBlockState());
+        ModWorldData.get(level.getServer()).addCastle(new BlockPos(cx, y, cz));
+    }
+
+    /** A frame of blood cobblestone on scorched ground with a portal to the Hellway. */
+    public static void buildHellPortal(ServerLevel level, int x, int y, int z) {
+        BlockState frame = ModRegistry.BLOOD_COBBLESTONE.get().defaultBlockState();
+        BlockState portal = ModRegistry.HELLWAY_PORTAL.get().defaultBlockState();
+        for (int dx = -3; dx <= 6; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                long h = DreamChunkGenerator.hash(x + dx, z + dz, 66);
+                double d = Math.sqrt((dx - 1.5D) * (dx - 1.5D) + dz * dz);
+                if (d < 2.5D + (h & 3) * 0.6D && !level.getBlockState(new BlockPos(x + dx, y - 1, z + dz)).isAir()) {
+                    set(level, x + dx, y - 1, z + dz, (h & 15) < 3 ? Blocks.MAGMA_BLOCK.defaultBlockState()
+                            : ((h & 15) < 8 ? frame : Blocks.NETHERRACK.defaultBlockState()));
+                }
+            }
+        }
+        for (int dx = 0; dx < 4; dx++) {
+            for (int dy = -1; dy <= 3; dy++) {
+                boolean border = dx == 0 || dx == 3 || dy == -1 || dy == 3;
+                set(level, x + dx, y + dy, z, border ? frame : portal);
+            }
+        }
+    }
+
+    /** Looks like an ordinary little house. There is no bed in it. */
+    public static void buildWrongHouse(ServerLevel level, int cx, int y, int cz) {
+        BlockState planks = Blocks.OAK_PLANKS.defaultBlockState();
+        BlockState log = Blocks.OAK_LOG.defaultBlockState();
+        BlockState cobble = Blocks.COBBLESTONE.defaultBlockState();
+        BlockState portal = ModRegistry.HELLWAY_PORTAL.get().defaultBlockState();
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                int x = cx + dx, z = cz + dz;
+                boolean edgeX = Math.abs(dx) == 3, edgeZ = Math.abs(dz) == 3;
+                for (int yy = y - 3; yy < y - 1; yy++) {
+                    if (level.getBlockState(new BlockPos(x, yy, z)).canBeReplaced()) {
+                        set(level, x, yy, z, cobble);
+                    }
+                }
+                set(level, x, y - 1, z, edgeX || edgeZ ? cobble : planks);
+                for (int dy = 0; dy <= 3; dy++) {
+                    BlockState s = AIR;
+                    if (edgeX && edgeZ) {
+                        s = log;
+                    } else if (edgeX || edgeZ) {
+                        s = dy == 0 ? cobble : planks;
+                    }
+                    set(level, x, y + dy, z, s);
+                }
+            }
+        }
+        // roof
+        for (int layer = 0; layer <= 3; layer++) {
+            int r = 4 - layer;
+            fill(level, cx - r, y + 4 + layer, cz - r, cx + r, y + 4 + layer, cz + r, layer == 3 ? Blocks.OAK_SLAB.defaultBlockState() : planks);
+            if (layer < 3 && r > 1) {
+                fill(level, cx - r + 1, y + 4 + layer, cz - r + 1, cx + r - 1, y + 4 + layer, cz + r - 1, layer == 0 ? planks : AIR);
+            }
+        }
+        // door
+        BlockState door = Blocks.OAK_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.SOUTH);
+        set(level, cx, y, cz - 3, door.setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER));
+        set(level, cx, y + 1, cz - 3, door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER));
+        // windows
+        set(level, cx - 3, y + 1, cz, Blocks.GLASS.defaultBlockState());
+        set(level, cx + 3, y + 1, cz, Blocks.GLASS.defaultBlockState());
+        set(level, cx - 1, y + 1, cz + 3, Blocks.GLASS.defaultBlockState());
+        // furniture
+        set(level, cx - 2, y, cz + 2, Blocks.CRAFTING_TABLE.defaultBlockState());
+        set(level, cx - 2, y, cz + 1, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.EAST));
+        set(level, cx, y + 3, cz, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+        set(level, cx + 1, y, cz + 2, Blocks.OAK_FENCE.defaultBlockState());
+        set(level, cx + 1, y + 1, cz + 2, Blocks.OAK_PRESSURE_PLATE.defaultBlockState());
+        // where the bed should be
+        set(level, cx + 2, y, cz + 1, portal);
+        set(level, cx + 2, y, cz + 2, portal);
+    }
+
+    /** The crashed ship of the Sky People. */
+    public static void buildShip(ServerLevel level, int cx, int y, int cz) {
+        BlockState hull = Blocks.IRON_BLOCK.defaultBlockState();
+        BlockState rim = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState();
+        BlockState glass = Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState();
+        for (int dx = -6; dx <= 6; dx++) {
+            for (int dz = -6; dz <= 6; dz++) {
+                double d = Math.sqrt(dx * dx + dz * dz);
+                int x = cx + dx, z = cz + dz;
+                if (d <= 3.6D) {
+                    set(level, x, y, z, hull);
+                }
+                if (d <= 6.3D) {
+                    BlockState s = d > 5.2D ? rim : hull;
+                    if (d > 5.2D && Math.floorMod(dx * 3 + dz * 5, 4) == 0) {
+                        s = ((dx + dz) & 1) == 0 ? Blocks.REDSTONE_BLOCK.defaultBlockState() : Blocks.EMERALD_BLOCK.defaultBlockState();
+                    }
+                    set(level, x, y + 1, z, s);
+                }
+                if (d <= 4.4D) {
+                    set(level, x, y + 2, z, d > 3.3D ? hull : AIR);
+                    set(level, x, y + 3, z, d > 2.4D ? hull : glass);
+                }
+                if (d <= 2.4D) {
+                    set(level, x, y + 4, z, glass);
+                }
+            }
+        }
+        // the hatch they came out of, and the light inside
+        set(level, cx, y + 2, cz - 4, AIR);
+        set(level, cx, y + 2, cz - 3, AIR);
+        set(level, cx, y + 1, cz, Blocks.SEA_LANTERN.defaultBlockState());
+        // scorched ground
+        for (int dx = -8; dx <= 8; dx++) {
+            for (int dz = -8; dz <= 8; dz++) {
+                long h = DreamChunkGenerator.hash(cx + dx, cz + dz, 404);
+                BlockPos p = new BlockPos(cx + dx, y - 1, cz + dz);
+                if (dx * dx + dz * dz <= 64 && (h & 3) == 0 && level.getBlockState(p).isSolidRender(level, p)) {
+                    level.setBlock(p, (h & 4) == 0 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.GRAVEL.defaultBlockState(), 2 | 16);
+                }
+            }
+        }
     }
 
     private Structures() {

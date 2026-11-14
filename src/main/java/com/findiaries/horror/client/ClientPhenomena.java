@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.GenericDirtMessageScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.renderer.GameRenderer;
@@ -33,6 +34,8 @@ import java.util.Random;
 @Mod.EventBusSubscriber(modid = FinDiaries.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientPhenomena {
     public static final String VERSION_TEXT = "minecraft.1.wonderland.0.";
+    /** Shown instead of the version while a lying triangle is in the sky. */
+    public static final String LYING_TEXT = "K***S.RU";
 
     private static final class Active {
         final int kind;
@@ -58,7 +61,11 @@ public final class ClientPhenomena {
 
     private static int duration(int kind) {
         switch (kind) {
-            case PhenomenonPacket.TRIANGLE: return 600;
+            case PhenomenonPacket.TRIANGLE:
+            case PhenomenonPacket.TRIANGLE_LYING:
+            case PhenomenonPacket.TRIANGLE_STAR:
+            case PhenomenonPacket.TRIANGLE_EYES: return 600;
+            case PhenomenonPacket.SHIP: return 100;
             case PhenomenonPacket.SLAB: return 540;
             case PhenomenonPacket.UFO: return 690;
             case PhenomenonPacket.WALKERS: return 140;
@@ -68,7 +75,7 @@ public final class ClientPhenomena {
     }
 
     private static boolean isSky(int kind) {
-        return kind == PhenomenonPacket.TRIANGLE || kind == PhenomenonPacket.SLAB || kind == PhenomenonPacket.UFO;
+        return PhenomenonPacket.isTriangle(kind) || kind == PhenomenonPacket.SLAB || kind == PhenomenonPacket.UFO;
     }
 
     /** Called on the client main thread when the server sends a phenomenon. */
@@ -137,21 +144,104 @@ public final class ClientPhenomena {
         return mc.level != null && mc.level.dimension().location().getNamespace().equals(FinDiaries.MODID);
     }
 
+    private static boolean lyingTriangle() {
+        for (Active a : ACTIVE) {
+            if (a.kind == PhenomenonPacket.TRIANGLE_LYING) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** True while a star triangle is in the sky and has not yet flown past the player. */
+    private static boolean vhs(Minecraft mc) {
+        if (mc.player == null) {
+            return false;
+        }
+        for (Active a : ACTIVE) {
+            if (a.kind != PhenomenonPacket.TRIANGLE_STAR) {
+                continue;
+            }
+            double dx = -Math.sin(a.angle), dz = Math.cos(a.angle);
+            double t = clientTicks - a.start;
+            double x = a.x + dx * TRIANGLE_SPEED * t, z = a.z + dz * TRIANGLE_SPEED * t;
+            double ahead = (mc.player.getX() - x) * dx + (mc.player.getZ() - z) * dz;
+            if (ahead > -380.0D) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @SubscribeEvent
     public static void onHud(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (!inDream(mc) || mc.options.hideGui || mc.options.renderDebug) {
+        if (mc.level == null) {
             return;
         }
-        event.getGuiGraphics().drawString(mc.font, VERSION_TEXT, 2, 2, 0xFFFFFF);
+        GuiGraphics g = event.getGuiGraphics();
+        if (vhs(mc)) {
+            drawVhs(mc, g);
+        }
+        if (mc.options.hideGui || mc.options.renderDebug) {
+            return;
+        }
+        if (lyingTriangle()) {
+            g.drawString(mc.font, LYING_TEXT, 2, 2, 0xFFFFFF);
+        } else if (inDream(mc)) {
+            g.drawString(mc.font, VERSION_TEXT, 2, 2, 0xFFFFFF);
+        }
     }
 
     @SubscribeEvent
     public static void onDebugText(CustomizeGuiOverlayEvent.DebugText event) {
         Minecraft mc = Minecraft.getInstance();
-        if (inDream(mc) && !event.getLeft().isEmpty()) {
+        if (event.getLeft().isEmpty()) {
+            return;
+        }
+        if (lyingTriangle()) {
+            event.getLeft().set(0, LYING_TEXT);
+        } else if (inDream(mc)) {
             event.getLeft().set(0, VERSION_TEXT);
         }
+    }
+
+    /** Old video tape: scan lines, a rolling tracking bar, noise, colour bleed and the PLAY label. */
+    private static void drawVhs(Minecraft mc, GuiGraphics g) {
+        int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
+        long tick = clientTicks;
+        Random r = new Random(tick / 2 * 7919L);
+        g.fill(0, 0, w, h, 0x1C182C50);
+        for (int y = 0; y < h; y += 3) {
+            g.fill(0, y, w, y + 1, 0x38000000);
+        }
+        // colour bleed at the edges
+        g.fill(0, 0, 3, h, 0x30FF2020);
+        g.fill(w - 3, 0, w, h, 0x302040FF);
+        // rolling tracking bar
+        int bar = (int) ((tick * 3) % (h + 60)) - 30;
+        g.fill(0, bar, w, bar + 9, 0x30FFFFFF);
+        g.fill(0, bar + 3, w, bar + 4, 0x70FFFFFF);
+        // torn lines of noise
+        for (int i = 0; i < 7; i++) {
+            int y = r.nextInt(h);
+            int x = r.nextInt(w);
+            g.fill(x, y, Math.min(w, x + 20 + r.nextInt(w / 3)), y + 1, 0x60FFFFFF);
+        }
+        // head switching noise at the bottom
+        for (int x = 0; x < w; x += 6) {
+            int a = 40 + r.nextInt(150);
+            g.fill(x, h - 9 + r.nextInt(3), x + 6, h - 5, (a << 24) | 0xE8E8E8);
+        }
+        g.pose().pushPose();
+        g.pose().scale(2.0F, 2.0F, 1.0F);
+        if ((tick / 12) % 4 != 3) {
+            g.drawString(mc.font, "PLAY \u25B6", 8, 12, 0xFFFFFF);
+        }
+        g.drawString(mc.font, "SP", w / 2 - 22, 12, 0xFFFFFF);
+        long sec = tick / 20;
+        g.drawString(mc.font, String.format("0:%02d:%02d", (sec / 60) % 60, sec % 60), 8, h / 2 - 22, 0xFFFFFF);
+        g.pose().popPose();
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -207,7 +297,9 @@ public final class ClientPhenomena {
             }
             float t = (clientTicks - a.start) + partial;
             switch (a.kind) {
-                case PhenomenonPacket.TRIANGLE -> drawTriangle(g, a, t, cam);
+                case PhenomenonPacket.TRIANGLE, PhenomenonPacket.TRIANGLE_LYING, PhenomenonPacket.TRIANGLE_STAR,
+                        PhenomenonPacket.TRIANGLE_EYES -> drawTriangle(g, a, t, cam);
+                case PhenomenonPacket.SHIP -> drawShip(g, a, t, cam);
                 case PhenomenonPacket.SLAB -> drawSlab(g, a, t, cam);
                 case PhenomenonPacket.UFO -> drawUfo(g, a, t, cam);
                 case PhenomenonPacket.WALKERS -> drawWalkers(g, a, t, cam);
@@ -251,17 +343,76 @@ public final class ClientPhenomena {
 
     // ---- 1. the black triangle -------------------------------------------------------------------
 
+    private static final double TRIANGLE_SPEED = 6.0D;
+
+    /** Same flat shape on the top and the bottom face of the triangle. */
+    private static void mark(Geo g, double h, double x0, double z0, double x1, double z1, double x2, double z2, int rgb) {
+        g.tri(x0, h, z0, x1, h, z1, x2, h, z2, rgb, 1.0F);
+        g.tri(x0, -h, z0, x1, -h, z1, x2, -h, z2, rgb, 1.0F);
+    }
+
+    private static void markQuad(Geo g, double h, double x0, double z0, double x1, double z1, int rgb) {
+        g.quad(x0, h, z0, x1, h, z0, x1, h, z1, x0, h, z1, rgb, 1.0F);
+        g.quad(x0, -h, z0, x1, -h, z0, x1, -h, z1, x0, -h, z1, rgb, 1.0F);
+    }
+
     private static void drawTriangle(Geo g, Active a, float t, Vec3 cam) {
-        if (!beginFlying(g, a, t, cam, 6.0D, 420.0D, fade(t, 600, 70.0F))) {
+        if (!beginFlying(g, a, t, cam, TRIANGLE_SPEED, 420.0D, fade(t, 600, 70.0F))) {
             return;
         }
-        final double nose = 340.0D, tail = -230.0D, half = 300.0D, h = 18.0D;
-        final int top = 0x09090B, bottom = 0x020203, side = 0x0E0E12;
+        boolean star = a.kind == PhenomenonPacket.TRIANGLE_STAR;
+        // the lying triangle is flat on its belly, the others fly banked
+        g.roll(a.kind == PhenomenonPacket.TRIANGLE_LYING ? 0.0D : 0.5D);
+        final double nose = 340.0D, tail = -230.0D, half = 300.0D, h = 14.0D;
+        final int top = star ? 0x0B1136 : 0x21439A, bottom = star ? 0x090E2C : 0x1D3B8A, side = star ? 0x060A20 : 0x152B66;
         g.tri(0, h, nose, -half, h, tail, half, h, tail, top, 1.0F);
         g.tri(0, -h, nose, -half, -h, tail, half, -h, tail, bottom, 1.0F);
         g.quad(0, -h, nose, -half, -h, tail, -half, h, tail, 0, h, nose, side, 1.0F);
         g.quad(0, -h, nose, half, -h, tail, half, h, tail, 0, h, nose, side, 0.8F);
         g.quad(-half, -h, tail, half, -h, tail, half, h, tail, -half, h, tail, side, 0.6F);
+        final double m = h + 2.5D;
+        if (star) {
+            Random r = new Random(a.seed);
+            for (int i = 0; i < 26; i++) {
+                double z = tail + 25.0D + r.nextDouble() * (nose - tail - 90.0D);
+                double reach = half * (nose - z) / (nose - tail) - 22.0D;
+                double x = (r.nextDouble() * 2.0D - 1.0D) * Math.max(0.0D, reach);
+                double size = 4.0D + r.nextDouble() * 7.0D;
+                boolean twinkle = ((int) (t / 6.0F) + i) % 5 != 0;
+                if (twinkle) {
+                    markQuad(g, m, x - size, z - size, x + size, z + size, i % 6 == 0 ? 0xFFE9A0 : 0xFFFFFF);
+                }
+            }
+            return;
+        }
+        final int light = 0x86B8E6;
+        mark(g, m, -190, -185, -45, -185, -190, -85, light);
+        mark(g, m, 115, -35, 228, -88, 115, -140, light);
+        markQuad(g, m, -14, 196, 14, 224, 0xE8822E);
+        if (a.kind == PhenomenonPacket.TRIANGLE_EYES) {
+            // two eyes that keep looking at you
+            double lookX = Math.max(-14.0D, Math.min(14.0D, Math.sin(t * 0.05F) * 14.0D));
+            for (int sgn = -1; sgn <= 1; sgn += 2) {
+                double ex = sgn * 92.0D, ez = 40.0D;
+                markQuad(g, m, ex - 46, ez - 26, ex + 46, ez + 26, 0xF4F1E8);
+                markQuad(g, m + 2.5D, ex - 15 + lookX, ez - 15, ex + 15 + lookX, ez + 15, 0x050505);
+            }
+        }
+    }
+
+    // ---- the falling ship of the Sky People -------------------------------------------------------
+
+    private static void drawShip(Geo g, Active a, float t, Vec3 cam) {
+        double p = Math.max(0.0D, 1.0D - t / 100.0D);
+        double x = a.x - 90.0D * p, y = a.y + 260.0D * p, z = a.z;
+        g.begin(x - cam.x, y - cam.y, z - cam.z, 0.0D, 1.0D, 1.0D, 1.0F);
+        g.box(-6, 0, -6, 6, 2, 6, 0xC8C8CD, true);
+        g.box(-3.5, 2, -3.5, 3.5, 4, 3.5, 0x82C8F0, true);
+        // fire behind it
+        double flick = 0.8D + 0.2D * Math.sin(t * 2.1F);
+        g.beam(0, 3, 0, -34 * flick, 98 * flick, 0, 5.0D, 0xFF7A18);
+        g.beam(0, 3, 0, -22 * flick, 64 * flick, 0, 3.0D, 0xFFD23C);
+        g.beam(0, 3, 0, -50 * flick, 145 * flick, 0, 2.0D, 0x5A5A5A);
     }
 
     // ---- 4. the dark slab with green and orange lights -------------------------------------------

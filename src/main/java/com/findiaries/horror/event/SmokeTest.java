@@ -94,6 +94,19 @@ public final class SmokeTest {
             throw new IllegalStateException("SMOKE: no giant trees in the cage");
         }
 
+        ServerLevel hellway = level(server, Journey.HELLWAY);
+        load(hellway, -1, 0, 1, 5);
+        expect(hellway, new BlockPos(2, DreamChunkGenerator.HELL_FLOOR, 10), Blocks.AIR, "hellway tunnel");
+        expect(hellway, new BlockPos(2, DreamChunkGenerator.HELL_FLOOR + DreamChunkGenerator.HELL_HEIGHT - 1, 10), Blocks.AIR, "hellway tunnel top");
+        expect(hellway, new BlockPos(7, DreamChunkGenerator.HELL_FLOOR, DreamChunkGenerator.HELL_ROOM_Z + 2), Blocks.AIR, "hellway room");
+        expect(hellway, new BlockPos(10, DreamChunkGenerator.HELL_FLOOR, DreamChunkGenerator.HELL_ROOM_Z + 2), ModRegistry.WONDERLAND_PORTAL.get(), "wonderland portal in the hellway");
+        for (BlockPos p : List.of(new BlockPos(2, DreamChunkGenerator.HELL_FLOOR - 1, 10), new BlockPos(-1, DreamChunkGenerator.HELL_FLOOR + 5, 11),
+                new BlockPos(DreamChunkGenerator.HELL_WIDTH, DreamChunkGenerator.HELL_FLOOR + 5, 11), new BlockPos(2, DreamChunkGenerator.HELL_FLOOR + DreamChunkGenerator.HELL_HEIGHT, 10))) {
+            if (!hellway.getBlockState(p).is(ModRegistry.RED_COBBLESTONE.get()) && !hellway.getBlockState(p).is(ModRegistry.BLOOD_COBBLESTONE.get())) {
+                throw new IllegalStateException("SMOKE: hellway wall missing at " + p + ": " + hellway.getBlockState(p));
+            }
+        }
+
         // entities
         ServerLevel overworld = server.overworld();
         BlockPos spawn = overworld.getSharedSpawnPos();
@@ -102,7 +115,8 @@ public final class SmokeTest {
         ServerPlayer fake = FakePlayerFactory.getMinecraft(overworld);
         fake.moveTo(spawn.getX() + 0.5D, sy, spawn.getZ() + 0.5D, 0.0F, 0.0F);
         List<EntityType<? extends Entity>> types = List.of(ModRegistry.LONGLEGS.get(), ModRegistry.WATCHER.get(),
-                ModRegistry.DANGER_12.get(), ModRegistry.BLUE_STRANGER.get());
+                ModRegistry.DANGER_12.get(), ModRegistry.BLUE_STRANGER.get(), ModRegistry.WANDERER.get(), ModRegistry.SHE.get(),
+                ModRegistry.FLOWER_MAN.get(), ModRegistry.RED_DEMON.get(), ModRegistry.SKY_PERSON.get());
         for (EntityType<? extends Entity> type : types) {
             Entity e = type.create(overworld);
             if (e == null) {
@@ -114,6 +128,33 @@ public final class SmokeTest {
                 e.tick();
             }
             e.discard();
+        }
+
+        // structures
+        int bx = spawn.getX() + 200, bz = spawn.getZ();
+        load(overworld, (bx - 16) >> 4, (bz - 16) >> 4, (bx + 80) >> 4, (bz + 16) >> 4);
+        int by = overworld.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
+        Structures.buildCastle(overworld, bx, by, bz);
+        BlockPos wall = new BlockPos(bx + Structures.CASTLE_HALF - 1, by + 3, bz + 3);
+        if (!overworld.getBlockState(wall).is(Blocks.COBBLESTONE) && !overworld.getBlockState(wall).is(Blocks.MOSSY_COBBLESTONE)) {
+            throw new IllegalStateException("SMOKE: castle wall missing: " + overworld.getBlockState(wall));
+        }
+        if (com.findiaries.horror.world.ModWorldData.get(server).castleAt(bx + 0.5D, by, bz + 0.5D) == null) {
+            throw new IllegalStateException("SMOKE: castle not remembered");
+        }
+        Structures.buildHellPortal(overworld, bx + 30, by, bz);
+        expect(overworld, new BlockPos(bx + 31, by, bz), ModRegistry.HELLWAY_PORTAL.get(), "hell portal");
+        expect(overworld, new BlockPos(bx + 30, by, bz), ModRegistry.BLOOD_COBBLESTONE.get(), "hell portal frame");
+        Structures.buildWrongHouse(overworld, bx + 50, by, bz);
+        expect(overworld, new BlockPos(bx + 52, by, bz + 1), ModRegistry.HELLWAY_PORTAL.get(), "portal instead of the bed");
+        expect(overworld, new BlockPos(bx + 50, by, bz - 3), Blocks.OAK_DOOR, "wrong house door");
+        Structures.buildShip(overworld, bx + 70, by, bz);
+        expect(overworld, new BlockPos(bx + 70, by + 1, bz), Blocks.SEA_LANTERN, "ship core");
+        com.findiaries.horror.world.FlowerFields.tickAround(overworld, spawn.getX(), spawn.getZ());
+        BlockPos field = com.findiaries.horror.world.FlowerFields.nearest(overworld, spawn.getX(), spawn.getZ());
+        FinDiaries.LOGGER.info("FINDIARIES SMOKE: nearest flower field {}", field);
+        if (field == null) {
+            throw new IllegalStateException("SMOKE: no flower field anywhere near spawn");
         }
 
         // every overworld event once

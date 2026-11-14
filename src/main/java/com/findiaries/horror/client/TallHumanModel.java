@@ -22,15 +22,20 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(FinDiaries.rl("tall_human"), "main");
 
     /** All factors are relative to a normal player (legs/arms/body 12 px long, limbs 4 px thick). */
-    public record Shape(float head, float bodyWidth, float bodyHeight, float limbWidth, float armLength, float legLength, float armSpread) {
-        public static final Shape LONGLEGS = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 3.0F, 5.0F, 0.0F);
-        public static final Shape BLUE_STRANGER = new Shape(1.0F, 0.9F, 1.4F, 0.85F, 2.0F, 2.6F, 0.04F);
-        public static final Shape WATCHER = new Shape(0.6F, 0.35F, 1.3F, 0.3F, 1.9F, 2.8F, 0.45F);
-        public static final Shape DANGER_12 = new Shape(0.6F, 0.3F, 1.6F, 0.28F, 2.4F, 3.0F, 0.4F);
+    public record Shape(float head, float bodyWidth, float bodyHeight, float limbWidth, float armLength, float legLength, float armSpread, boolean horns) {
+        public static final Shape LONGLEGS = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 3.0F, 5.0F, 0.0F, false);
+        public static final Shape BLUE_STRANGER = new Shape(1.0F, 0.9F, 1.4F, 0.85F, 2.0F, 2.6F, 0.04F, false);
+        public static final Shape WATCHER = new Shape(0.6F, 0.35F, 1.3F, 0.3F, 1.9F, 2.8F, 0.45F, false);
+        public static final Shape WANDERER = new Shape(0.9F, 0.8F, 1.5F, 0.6F, 2.6F, 3.6F, Mth.HALF_PI, false);
+        public static final Shape SHE = new Shape(0.75F, 0.3F, 1.6F, 0.25F, 2.5F, 3.0F, 0.08F, false);
+        public static final Shape RED_DEMON = new Shape(0.7F, 0.32F, 1.7F, 0.26F, 2.6F, 3.1F, 0.25F, true);
+        public static final Shape SKY_PERSON = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, false);
+        public static final Shape DANGER_12 = new Shape(0.6F, 0.3F, 1.6F, 0.28F, 2.4F, 3.0F, 0.4F, false);
     }
 
     private final Shape shape;
     private final ModelPart head;
+    private final ModelPart horns;
     private final ModelPart body;
     private final ModelPart rightArm;
     private final ModelPart leftArm;
@@ -40,6 +45,7 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
     public TallHumanModel(ModelPart root, Shape shape) {
         this.shape = shape;
         this.head = root.getChild("head");
+        this.horns = root.getChild("horns");
         this.body = root.getChild("body");
         this.rightArm = root.getChild("right_arm");
         this.leftArm = root.getChild("left_arm");
@@ -51,6 +57,8 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         MeshDefinition mesh = new MeshDefinition();
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -8.0F, -4.0F, 8.0F, 8.0F, 8.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
+        root.addOrReplaceChild("horns", CubeListBuilder.create().texOffs(0, 0)
+                .addBox(-4.0F, -13.0F, -0.5F, 1.0F, 5.0F, 1.0F).addBox(3.0F, -13.0F, -0.5F, 1.0F, 5.0F, 1.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
         root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(16, 16).addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
         root.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(40, 16).addBox(-3.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F), PartPose.offset(-5.0F, 2.0F, 0.0F));
         root.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(32, 48).addBox(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F), PartPose.offset(5.0F, 2.0F, 0.0F));
@@ -89,6 +97,10 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
 
         this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
         this.head.xRot = headPitch * Mth.DEG_TO_RAD;
+        place(this.horns, 0.0F, bodyTop, s.head, s.head, s.head);
+        this.horns.yRot = this.head.yRot;
+        this.horns.xRot = this.head.xRot;
+        this.horns.visible = s.horns;
 
         float stride = 0.6662F / Mth.sqrt(s.legLength);
         float swing = Mth.cos(limbSwing * stride) * 0.8F * limbSwingAmount;
@@ -100,11 +112,18 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         float sway = Mth.cos(ageInTicks * 0.06F) * 0.03F;
         this.rightArm.zRot = s.armSpread + sway;
         this.leftArm.zRot = -s.armSpread - sway;
+        if (s.armSpread > 1.4F && ageInTicks > 150.0F && ageInTicks < 450.0F) {
+            // the Wanderer waves while the triangle is overhead
+            float wave = Mth.sin(ageInTicks * 0.45F) * 0.6F;
+            this.rightArm.zRot = s.armSpread + wave;
+            this.leftArm.zRot = -s.armSpread - wave;
+        }
     }
 
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.horns.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rightArm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.leftArm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);

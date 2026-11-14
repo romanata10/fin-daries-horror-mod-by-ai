@@ -3,6 +3,13 @@ package com.findiaries.horror.client;
 import com.findiaries.horror.FinDiaries;
 import com.findiaries.horror.ModRegistry;
 import com.findiaries.horror.entity.ApparitionEntity;
+import com.findiaries.horror.entity.SkyPersonEntity;
+import com.findiaries.horror.event.HorrorDirector;
+import com.findiaries.horror.world.FlowerFields;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.block.DoublePlantBlock;
+import net.minecraft.world.level.levelgen.Heightmap;
 import com.findiaries.horror.event.Journey;
 import com.findiaries.horror.network.Net;
 import com.findiaries.horror.network.PhenomenonPacket;
@@ -82,6 +89,13 @@ public final class ClientSmoke {
         p.teleportTo(p.serverLevel(), x, y, z, yaw, pitch);
     }
 
+    private static void clearMobs(ServerPlayer p) {
+        for (Mob e : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(128.0D),
+                m -> m instanceof ApparitionEntity || m instanceof SkyPersonEntity)) {
+            e.discard();
+        }
+    }
+
     private static void look(float pitch) {
         server(p -> fly(p, p.getX(), p.getY(), p.getZ(), 0.0F, pitch));
     }
@@ -128,6 +142,18 @@ public final class ClientSmoke {
         step(12, () -> shot("04_walkers"));
         step(2, () -> ClientPhenomena.debugShow(ahead(PhenomenonPacket.TOWER, -40.0D, -12.0D), 110));
         step(12, () -> shot("05_tower"));
+        // ---- the other triangles ----
+        step(2, () -> {
+            look(-35.0F);
+            ClientPhenomena.debugShow(ahead(PhenomenonPacket.TRIANGLE_EYES, 1800.0D, 170.0D), 340);
+        });
+        step(12, () -> shot("21_triangle_eyes"));
+        step(2, () -> ClientPhenomena.debugShow(ahead(PhenomenonPacket.TRIANGLE_STAR, 1800.0D, 170.0D), 340));
+        step(12, () -> shot("22_triangle_star_vhs"));
+        step(2, () -> ClientPhenomena.debugShow(ahead(PhenomenonPacket.TRIANGLE_LYING, 1800.0D, 170.0D), 340));
+        step(12, () -> shot("23_triangle_lying"));
+        step(2, () -> ClientPhenomena.debugShow(ahead(PhenomenonPacket.SHIP, -45.0D, -12.0D), 75));
+        step(12, () -> shot("24_ship_falling"));
         // ---- entities ----
         step(2, () -> {
             ClientPhenomena.debugClear();
@@ -147,11 +173,64 @@ public final class ClientSmoke {
         });
         step(50, () -> shot("06_entities"));
         step(2, () -> server(p -> {
-            for (ApparitionEntity e : p.serverLevel().getEntitiesOfClass(ApparitionEntity.class, p.getBoundingBox().inflate(128.0D))) {
-                e.discard();
+            clearMobs(p);
+            ServerLevel level = p.serverLevel();
+            List<EntityType<? extends Entity>> types = List.of(ModRegistry.WANDERER.get(), ModRegistry.SHE.get(),
+                    ModRegistry.FLOWER_MAN.get(), ModRegistry.RED_DEMON.get(), ModRegistry.SKY_PERSON.get());
+            for (int i = 0; i < types.size(); i++) {
+                Entity e = types.get(i).create(level);
+                e.setNoGravity(true);
+                e.moveTo(p.getX() - 9.0D + i * 4.5D, p.getY() - 2.0D, p.getZ() + 14.0D, 180.0F, 0.0F);
+                level.addFreshEntity(e);
             }
-            Journey.go(p, Journey.Dest.WONDERLAND);
         }));
+        step(30, () -> shot("25_new_entities"));
+        // ---- flower field ----
+        step(2, () -> server(p -> {
+            clearMobs(p);
+            ServerLevel level = p.serverLevel();
+            BlockPos field = FlowerFields.nearest(level, p.getBlockX(), p.getBlockZ());
+            level.getChunk(field.getX() >> 4, field.getZ() >> 4);
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, field.getX(), field.getZ());
+            fly(p, field.getX() + 0.5D, y + 9.0D, field.getZ() + 0.5D, 0.0F, 24.0F);
+        }));
+        step(260, () -> server(p -> HorrorDirector.runEvent("flower_man", p)));
+        step(30, () -> shot("26_flower_field"));
+        // ---- structures ----
+        step(2, () -> server(p -> {
+            clearMobs(p);
+            ServerLevel level = p.serverLevel();
+            int x = p.getBlockX(), z = p.getBlockZ();
+            Structures.buildCastle(level, x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z + 52), z + 52);
+            Structures.buildWrongHouse(level, x - 20, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x - 20, z + 26), z + 26);
+            Structures.buildHellPortal(level, x + 9, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x + 9, z + 20), z + 20);
+            Structures.buildShip(level, x + 26, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x + 26, z + 34), z + 34);
+            BlockPos flower = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z + 9), z + 9);
+            DoublePlantBlock.placeAt(level, ModRegistry.EYE_FLOWER.get().defaultBlockState(), flower, 2);
+            fly(p, p.getX(), p.getY() + 4.0D, p.getZ(), 0.0F, 20.0F);
+        }));
+        step(60, () -> shot("27_structures"));
+        step(2, () -> server(p -> fly(p, p.getX(), p.getY() - 9.0D, p.getZ() + 4.0D, 0.0F, 35.0F)));
+        step(30, () -> shot("28_eye_flower"));
+        // ---- hellway ----
+        step(2, () -> server(p -> Journey.go(p, Journey.Dest.HELLWAY)));
+        step(160, () -> {
+            expectDimension(Journey.HELLWAY);
+            server(p -> {
+                ServerLevel level = p.serverLevel();
+                p.teleportTo(level, 2.0D, DreamChunkGenerator.HELL_FLOOR, 0.5D, 0.0F, -5.0F);
+                Entity demon = ModRegistry.RED_DEMON.get().create(level);
+                demon.moveTo(2.0D, DreamChunkGenerator.HELL_FLOOR, 13.5D, 180.0F, 0.0F);
+                level.addFreshEntity(demon);
+            });
+        });
+        step(30, () -> shot("29_hellway_demon"));
+        step(2, () -> server(p -> {
+            clearMobs(p);
+            p.teleportTo(p.serverLevel(), 1.5D, DreamChunkGenerator.HELL_FLOOR, DreamChunkGenerator.HELL_ROOM_Z + 3.0D, -90.0F, 0.0F);
+        }));
+        step(40, () -> shot("30_hellway_room"));
+        step(2, () -> server(p -> p.teleportTo(p.serverLevel(), 10.5D, DreamChunkGenerator.HELL_FLOOR, DreamChunkGenerator.HELL_ROOM_Z + 3.0D, -90.0F, 0.0F)));
         // ---- wonderland.avi ----
         step(200, () -> {
             expectDimension(Journey.WONDERLAND);

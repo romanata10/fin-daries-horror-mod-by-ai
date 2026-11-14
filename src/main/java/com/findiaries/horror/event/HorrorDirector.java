@@ -4,7 +4,14 @@ import com.findiaries.horror.Config;
 import com.findiaries.horror.FinDiaries;
 import com.findiaries.horror.ModRegistry;
 import com.findiaries.horror.entity.BlueStrangerEntity;
+import com.findiaries.horror.entity.FlowerManEntity;
 import com.findiaries.horror.entity.LongLegsEntity;
+import com.findiaries.horror.entity.SheEntity;
+import com.findiaries.horror.entity.SkyPersonEntity;
+import com.findiaries.horror.entity.WandererEntity;
+import com.findiaries.horror.world.FlowerFields;
+import com.findiaries.horror.world.ModWorldData;
+import net.minecraft.world.entity.Entity;
 import com.findiaries.horror.network.Net;
 import com.findiaries.horror.network.PhenomenonPacket;
 import com.findiaries.horror.world.Structures;
@@ -49,6 +56,8 @@ import java.util.function.Supplier;
 public final class HorrorDirector {
     private static final Random RNG = new Random();
     private static final String NEXT = "fd_next_event";
+    private static final String CASTLE = "fd_castle";
+    private static final String FLOWER = "fd_flower";
 
     private record Task(long tick, Runnable run) {
     }
@@ -62,7 +71,7 @@ public final class HorrorDirector {
     private static final Map<String, Event> EVENTS = new LinkedHashMap<>();
 
     static {
-        EVENTS.put("triangle", new Event(14, HorrorDirector::triangle));
+        EVENTS.put("triangle", new Event(16, HorrorDirector::triangle));
         EVENTS.put("longlegs", new Event(16, HorrorDirector::longLegs));
         EVENTS.put("blue_stranger", new Event(14, HorrorDirector::blueStranger));
         EVENTS.put("slab", new Event(12, HorrorDirector::slab));
@@ -70,6 +79,16 @@ public final class HorrorDirector {
         EVENTS.put("tower", new Event(10, HorrorDirector::tower));
         EVENTS.put("ufo", new Event(8, HorrorDirector::ufo));
         EVENTS.put("portal", new Event(6, HorrorDirector::portal));
+        EVENTS.put("spaceship", new Event(6, HorrorDirector::spaceship));
+        EVENTS.put("hell_portal", new Event(5, HorrorDirector::hellPortal));
+        EVENTS.put("castle", new Event(4, HorrorDirector::castle));
+        EVENTS.put("wrong_house", new Event(4, HorrorDirector::wrongHouse));
+        // weight 0: never picked at random on their own, only through "triangle", the flower fields or by hand
+        EVENTS.put("triangle_wanderer", new Event(0, HorrorDirector::triangleWanderer));
+        EVENTS.put("triangle_lying", new Event(0, p -> flyTriangle(p, PhenomenonPacket.TRIANGLE_LYING)));
+        EVENTS.put("triangle_star", new Event(0, p -> flyTriangle(p, PhenomenonPacket.TRIANGLE_STAR)));
+        EVENTS.put("triangle_eyes", new Event(0, HorrorDirector::triangleEyes));
+        EVENTS.put("flower_man", new Event(0, HorrorDirector::flowerMan));
     }
 
     public static void later(int delay, Runnable run) {
@@ -150,6 +169,11 @@ public final class HorrorDirector {
             entities.put("watcher", ModRegistry.WATCHER);
             entities.put("danger_12", ModRegistry.DANGER_12);
             entities.put("blue_stranger", ModRegistry.BLUE_STRANGER);
+            entities.put("wanderer", ModRegistry.WANDERER);
+            entities.put("she", ModRegistry.SHE);
+            entities.put("flower_man", ModRegistry.FLOWER_MAN);
+            entities.put("red_demon", ModRegistry.RED_DEMON);
+            entities.put("sky_person", ModRegistry.SKY_PERSON);
             entities.forEach((name, type) -> summon.then(Commands.literal(name).executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
                 boolean ok = summon(player, type.get());
@@ -191,6 +215,17 @@ public final class HorrorDirector {
                 }
                 Structures.ensureHallway(level);
                 player.teleportTo(level, 0.5D, Structures.HALL_Y + 1, Structures.HOUSE_Z + 0.8D, 0.0F, 0.0F);
+                return 1;
+            }));
+            tp.then(Commands.literal("flowers").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                ServerLevel overworld = player.server.overworld();
+                BlockPos field = FlowerFields.nearest(overworld, player.getBlockX(), player.getBlockZ());
+                if (field == null) {
+                    return 0;
+                }
+                int y = surfaceY(overworld, field.getX(), field.getZ());
+                player.teleportTo(overworld, field.getX() + 0.5D, y, field.getZ() + 0.5D, player.getYRot(), 0.0F);
                 return 1;
             }));
             root.then(tp);
@@ -241,6 +276,7 @@ public final class HorrorDirector {
             return;
         }
         CompoundTag data = player.getPersistentData();
+        tickPlaces(player, data);
         if (!data.contains(NEXT)) {
             data.putInt(NEXT, interval());
             return;
@@ -251,6 +287,53 @@ public final class HorrorDirector {
             next = interval();
         }
         data.putInt(NEXT, next);
+    }
+
+    /** The cobblestone castle (She) and the flower fields (Flower Man). */
+    private static void tickPlaces(ServerPlayer player, CompoundTag data) {
+        ServerLevel level = player.serverLevel();
+        // two minutes inside a castle and She comes
+        int inCastle = data.getInt(CASTLE);
+        if (ModWorldData.get(level.getServer()).castleAt(player.getX(), player.getY(), player.getZ()) != null) {
+            inCastle++;
+            if (inCastle >= 20 * 120) {
+                spawnShe(player);
+                inCastle = -20 * 60 * 5;
+            }
+        } else if (inCastle > 0) {
+            inCastle = 0;
+        } else if (inCastle < 0) {
+            inCastle++;
+        }
+        data.putInt(CASTLE, inCastle);
+
+        if (player.tickCount % 40 == 0) {
+            FlowerFields.tickAround(level, player.getBlockX(), player.getBlockZ());
+        }
+        if (FlowerFields.inside(level, player.getX(), player.getZ())) {
+            int next = data.contains(FLOWER) ? data.getInt(FLOWER) - 1 : 20 * (20 + RNG.nextInt(40));
+            if (next <= 0) {
+                flowerMan(player);
+                next = 20 * (45 + RNG.nextInt(75));
+            }
+            data.putInt(FLOWER, next);
+        }
+    }
+
+    public static boolean spawnShe(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        SheEntity she = ModRegistry.SHE.get().create(level);
+        if (she == null) {
+            return false;
+        }
+        double angle = viewAngle(player, 0.5D) + Math.PI; // behind your back
+        double x = player.getX() + Math.cos(angle) * 22.0D, z = player.getZ() + Math.sin(angle) * 22.0D;
+        she.moveTo(x, player.getY(), z, 0.0F, 0.0F);
+        she.setTarget(player);
+        level.addFreshEntity(she);
+        player.playNotifySound(SoundEvents.AMBIENT_CAVE.value(), SoundSource.HOSTILE, 1.0F, 0.5F);
+        player.playNotifySound(SoundEvents.WARDEN_HEARTBEAT, SoundSource.HOSTILE, 2.0F, 0.8F);
+        return true;
     }
 
     public static List<String> eventNames() {
@@ -268,6 +351,9 @@ public final class HorrorDirector {
             int total = 0;
             for (Event e : pool) {
                 total += e.weight;
+            }
+            if (total <= 0) {
+                return;
             }
             int roll = RNG.nextInt(total);
             Event chosen = pool.get(0);
@@ -322,15 +408,226 @@ public final class HorrorDirector {
     // 1. the giant black triangle
     // ---------------------------------------------------------------------------------------------
 
+    /** One of the four kinds of triangle. The ordinary one sometimes brings the Wanderer. */
     private static boolean triangle(ServerPlayer player) {
+        int roll = RNG.nextInt(100);
+        if (roll < 40) {
+            return flyTriangle(player, PhenomenonPacket.TRIANGLE);
+        } else if (roll < 55) {
+            return triangleWanderer(player);
+        } else if (roll < 70) {
+            return flyTriangle(player, PhenomenonPacket.TRIANGLE_LYING);
+        } else if (roll < 85) {
+            return flyTriangle(player, PhenomenonPacket.TRIANGLE_STAR);
+        }
+        return triangleEyes(player);
+    }
+
+    private static boolean flyTriangle(ServerPlayer player, int kind) {
         ServerLevel level = player.serverLevel();
         float angle = RNG.nextFloat() * (float) (Math.PI * 2.0D);
         double dx = -Math.sin(angle), dz = Math.cos(angle);
         double y = Math.max(250.0D, player.getY() + 150.0D);
-        Net.toLevel(level, new PhenomenonPacket(PhenomenonPacket.TRIANGLE,
+        Net.toLevel(level, new PhenomenonPacket(kind,
                 player.getX() - dx * 1800.0D, y, player.getZ() - dz * 1800.0D, angle, RNG.nextLong()));
-        soundAll(level, player, ModRegistry.CHIRP.get(), 1.0F, 1.0F);
+        soundAll(level, player, ModRegistry.CHIRP.get(), 1.0F, kind == PhenomenonPacket.TRIANGLE_STAR ? 0.8F : 1.0F);
         return true;
+    }
+
+    /** The Wanderer stands with his arms out, waves at the triangle and is gone when it is gone. */
+    private static boolean triangleWanderer(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        flyTriangle(player, PhenomenonPacket.TRIANGLE);
+        for (int attempt = 0; attempt < 20; attempt++) {
+            double angle = viewAngle(player, 0.9D);
+            double dist = 22.0D + RNG.nextDouble() * 16.0D;
+            int x = (int) Math.floor(player.getX() + Math.cos(angle) * dist);
+            int z = (int) Math.floor(player.getZ() + Math.sin(angle) * dist);
+            int y = surfaceY(level, x, z);
+            BlockPos pos = new BlockPos(x, y, z);
+            if (Math.abs(y - player.getBlockY()) > 10 || !standable(level, pos)) {
+                continue;
+            }
+            WandererEntity wanderer = ModRegistry.WANDERER.get().create(level);
+            if (wanderer == null) {
+                break;
+            }
+            float yaw = (float) (Math.atan2(player.getZ() - z, player.getX() - x) * (180.0D / Math.PI)) - 90.0F;
+            wanderer.moveTo(x + 0.5D, y, z + 0.5D, yaw, 0.0F);
+            wanderer.yHeadRot = yaw;
+            wanderer.yBodyRot = yaw;
+            level.addFreshEntity(wanderer);
+            break;
+        }
+        return true;
+    }
+
+    /** The triangle with eyes looks at you and the ground around you goes five blocks up. */
+    private static boolean triangleEyes(ServerPlayer player) {
+        flyTriangle(player, PhenomenonPacket.TRIANGLE_EYES);
+        later(60, () -> liftGround(player));
+        return true;
+    }
+
+    private static void liftGround(ServerPlayer player) {
+        if (player.hasDisconnected() || !player.isAlive() || player.level().dimension() != Level.OVERWORLD) {
+            return;
+        }
+        ServerLevel level = player.serverLevel();
+        final int radius = 10, up = 5;
+        BlockPos c = player.blockPosition();
+        BlockState air = Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos from = new BlockPos.MutableBlockPos(), to = new BlockPos.MutableBlockPos();
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                for (int dy = radius; dy >= -radius; dy--) { // top first, so every block has room above it
+                    if (dx * dx + dy * dy + dz * dz > radius * radius) {
+                        continue;
+                    }
+                    from.set(c.getX() + dx, c.getY() + dy, c.getZ() + dz);
+                    to.set(from.getX(), from.getY() + up, from.getZ());
+                    if (from.getY() <= level.getMinBuildHeight() || to.getY() >= level.getMaxBuildHeight()) {
+                        continue;
+                    }
+                    BlockState state = level.getBlockState(from);
+                    if (state.isAir() || state.hasBlockEntity() || state.getDestroySpeed(level, from) < 0.0F) {
+                        continue;
+                    }
+                    if (!level.getBlockState(to).canBeReplaced()) {
+                        continue;
+                    }
+                    level.setBlock(to, state, 2 | 16);
+                    level.setBlock(from, air, 2 | 16);
+                }
+            }
+        }
+        for (Entity e : level.getEntities((Entity) null, player.getBoundingBox().inflate(radius), other -> other.distanceToSqr(player) <= radius * radius)) {
+            e.teleportTo(e.getX(), e.getY() + up, e.getZ());
+        }
+        level.playSound(null, c.above(up), SoundEvents.PISTON_EXTEND, SoundSource.BLOCKS, 4.0F, 0.4F);
+        player.playNotifySound(SoundEvents.AMBIENT_CAVE.value(), SoundSource.AMBIENT, 1.0F, 0.5F);
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // structures of the second update
+    // ---------------------------------------------------------------------------------------------
+
+    /** Picks a dry place in front of the player; returns null if the ground is too uneven. */
+    private static BlockPos site(ServerPlayer player, double minDist, double maxDist, int half, int maxSlope) {
+        ServerLevel level = player.serverLevel();
+        for (int attempt = 0; attempt < 12; attempt++) {
+            double angle = viewAngle(player, 1.1D);
+            double dist = minDist + RNG.nextDouble() * (maxDist - minDist);
+            int x = (int) Math.floor(player.getX() + Math.cos(angle) * dist);
+            int z = (int) Math.floor(player.getZ() + Math.sin(angle) * dist);
+            int y = surfaceY(level, x, z);
+            if (Math.abs(y - player.getBlockY()) > 30 || !level.getFluidState(new BlockPos(x, y - 1, z)).isEmpty()) {
+                continue;
+            }
+            int lo = y, hi = y;
+            boolean wet = false;
+            for (int sx = -1; sx <= 1; sx += 2) {
+                for (int sz = -1; sz <= 1; sz += 2) {
+                    int cy = surfaceY(level, x + sx * half, z + sz * half);
+                    lo = Math.min(lo, cy);
+                    hi = Math.max(hi, cy);
+                    wet |= !level.getFluidState(new BlockPos(x + sx * half, cy - 1, z + sz * half)).isEmpty();
+                }
+            }
+            if (wet || hi - lo > maxSlope) {
+                continue;
+            }
+            return new BlockPos(x, y, z);
+        }
+        return null;
+    }
+
+    private static boolean castle(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        if (ModWorldData.get(level.getServer()).castleNear(player.getBlockX(), player.getBlockZ(), 400)) {
+            return false;
+        }
+        BlockPos pos = site(player, 70.0D, 110.0D, Structures.CASTLE_HALF, 7);
+        if (pos == null) {
+            return false;
+        }
+        Structures.buildCastle(level, pos.getX(), pos.getY(), pos.getZ());
+        return true;
+    }
+
+    private static boolean hellPortal(ServerPlayer player) {
+        BlockPos pos = site(player, 40.0D, 75.0D, 3, 4);
+        if (pos == null) {
+            return false;
+        }
+        Structures.buildHellPortal(player.serverLevel(), pos.getX(), pos.getY(), pos.getZ());
+        player.playNotifySound(SoundEvents.PORTAL_AMBIENT, SoundSource.AMBIENT, 0.6F, 0.4F);
+        return true;
+    }
+
+    private static boolean wrongHouse(ServerPlayer player) {
+        BlockPos pos = site(player, 55.0D, 95.0D, 4, 3);
+        if (pos == null) {
+            return false;
+        }
+        Structures.buildWrongHouse(player.serverLevel(), pos.getX(), pos.getY(), pos.getZ());
+        return true;
+    }
+
+    /** A ship falls out of the sky and the Sky People climb out of it. */
+    private static boolean spaceship(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        BlockPos pos = site(player, 35.0D, 55.0D, 6, 6);
+        if (pos == null) {
+            return false;
+        }
+        Net.toLevel(level, new PhenomenonPacket(PhenomenonPacket.SHIP, pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, RNG.nextLong()));
+        soundAll(level, player, ModRegistry.HUM.get(), 1.0F, 1.7F);
+        later(100, () -> {
+            level.explode(null, pos.getX() + 0.5D, pos.getY() + 2.0D, pos.getZ() + 0.5D, 3.0F, Level.ExplosionInteraction.NONE);
+            Structures.buildShip(level, pos.getX(), pos.getY(), pos.getZ());
+            int n = 2 + RNG.nextInt(2);
+            for (int i = 0; i < n; i++) {
+                SkyPersonEntity person = ModRegistry.SKY_PERSON.get().create(level);
+                if (person == null) {
+                    continue;
+                }
+                double a = Math.PI * 2.0D * i / n + RNG.nextDouble();
+                int x = (int) Math.floor(pos.getX() + Math.cos(a) * 8.5D), z = (int) Math.floor(pos.getZ() + Math.sin(a) * 8.5D);
+                person.moveTo(x + 0.5D, surfaceY(level, x, z), z + 0.5D, RNG.nextFloat() * 360.0F, 0.0F);
+                level.addFreshEntity(person);
+            }
+        });
+        return true;
+    }
+
+    /** Flower Man: only comes on its own in the flower fields. */
+    private static boolean flowerMan(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        if (!level.getEntitiesOfClass(FlowerManEntity.class, player.getBoundingBox().inflate(64.0D)).isEmpty()) {
+            return false;
+        }
+        for (int attempt = 0; attempt < 16; attempt++) {
+            double angle = viewAngle(player, 1.0D);
+            double dist = 14.0D + RNG.nextDouble() * 12.0D;
+            int x = (int) Math.floor(player.getX() + Math.cos(angle) * dist);
+            int z = (int) Math.floor(player.getZ() + Math.sin(angle) * dist);
+            int y = surfaceY(level, x, z);
+            if (Math.abs(y - player.getBlockY()) > 8 || !level.getFluidState(new BlockPos(x, y - 1, z)).isEmpty()) {
+                continue;
+            }
+            FlowerManEntity man = ModRegistry.FLOWER_MAN.get().create(level);
+            if (man == null) {
+                return false;
+            }
+            float yaw = (float) (Math.atan2(player.getZ() - z, player.getX() - x) * (180.0D / Math.PI)) - 90.0F;
+            man.moveTo(x + 0.5D, y, z + 0.5D, yaw, 0.0F);
+            man.yHeadRot = yaw;
+            man.yBodyRot = yaw;
+            level.addFreshEntity(man);
+            return true;
+        }
+        return false;
     }
 
     // ---------------------------------------------------------------------------------------------

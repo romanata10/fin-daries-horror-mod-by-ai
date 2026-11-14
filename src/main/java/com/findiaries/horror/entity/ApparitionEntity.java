@@ -73,6 +73,7 @@ public abstract class ApparitionEntity extends Mob {
             return;
         }
         if (this.tickCount > this.maxLife) {
+            this.onExpire();
             this.discard();
             return;
         }
@@ -83,6 +84,10 @@ public abstract class ApparitionEntity extends Mob {
                 this.nearPlayer(player, this.distanceTo(player));
             }
         }
+    }
+
+    /** Called once when the entity's time is up, just before it vanishes. */
+    protected void onExpire() {
     }
 
     /** Called every server tick with the closest (non-spectator) player. */

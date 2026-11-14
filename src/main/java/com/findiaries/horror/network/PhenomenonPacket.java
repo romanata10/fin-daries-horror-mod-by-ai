@@ -18,6 +18,14 @@ public record PhenomenonPacket(int kind, double x, double y, double z, float ang
     public static final int UFO = 3;
     public static final int WALKERS = 4;
     public static final int TOWER = 5;
+    public static final int TRIANGLE_LYING = 6;
+    public static final int TRIANGLE_STAR = 7;
+    public static final int TRIANGLE_EYES = 8;
+    public static final int SHIP = 9;
+
+    public static boolean isTriangle(int kind) {
+        return kind == TRIANGLE || kind == TRIANGLE_LYING || kind == TRIANGLE_STAR || kind == TRIANGLE_EYES;
+    }
 
     public static void encode(PhenomenonPacket p, FriendlyByteBuf buf) {
         buf.writeVarInt(p.kind);

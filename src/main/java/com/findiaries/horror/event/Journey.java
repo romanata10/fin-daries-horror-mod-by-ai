@@ -3,6 +3,7 @@ package com.findiaries.horror.event;
 import com.findiaries.horror.FinDiaries;
 import com.findiaries.horror.ModRegistry;
 import com.findiaries.horror.entity.Danger12Entity;
+import com.findiaries.horror.entity.RedDemonEntity;
 import com.findiaries.horror.entity.WatcherEntity;
 import com.findiaries.horror.world.DreamChunkGenerator;
 import com.findiaries.horror.world.Structures;
@@ -39,8 +40,9 @@ public final class Journey {
     public static final ResourceKey<Level> HALLWAY = key("hallway");
     public static final ResourceKey<Level> WONDERFLOWERS = key("wonderflowers");
     public static final ResourceKey<Level> CAGE = key("cage_wonderland");
+    public static final ResourceKey<Level> HELLWAY = key("hellway");
 
-    public enum Dest { WONDERLAND, HALLWAY, WONDERFLOWERS, CAGE, ALIVE }
+    public enum Dest { WONDERLAND, HALLWAY, WONDERFLOWERS, CAGE, HELLWAY, ALIVE }
 
     private static final Map<UUID, Dest> PENDING = new HashMap<>();
     private static final Random RNG = new Random();
@@ -50,6 +52,7 @@ public final class Journey {
     private static final String WF_TIME = "fd_wf_time";
     private static final String WF_ISLAND = "fd_wf_island";
     private static final String WATCH = "fd_watch";
+    private static final String HELL = "fd_hell";
 
     private static ResourceKey<Level> key(String name) {
         return ResourceKey.create(Registries.DIMENSION, FinDiaries.rl(name));
@@ -57,6 +60,27 @@ public final class Journey {
 
     public static boolean isDream(Level level) {
         return level.dimension().location().getNamespace().equals(FinDiaries.MODID);
+    }
+
+    private static void rememberReturn(ServerPlayer player) {
+        if (player.level().dimension() == Level.OVERWORLD) {
+            CompoundTag data = player.getPersistentData();
+            data.putDouble("fd_rx", player.getX());
+            data.putDouble("fd_ry", player.getY());
+            data.putDouble("fd_rz", player.getZ());
+            data.putBoolean("fd_has_return", true);
+        }
+    }
+
+    /** Grants one of the mod's advancements. */
+    public static void award(ServerPlayer player, String id) {
+        Advancement adv = player.server.getAdvancements().getAdvancement(FinDiaries.rl(id));
+        if (adv != null) {
+            AdvancementProgress progress = player.getAdvancements().getOrStartProgress(adv);
+            for (String criterion : toList(progress.getRemainingCriteria())) {
+                player.getAdvancements().award(adv, criterion);
+            }
+        }
     }
 
     /** Called by portal blocks. The actual move happens at the end of the server tick. */
@@ -93,6 +117,8 @@ public final class Journey {
             tickWonderflowers(player, data);
         } else if (dim == WONDERLAND) {
             tickWonderland(player, data);
+        } else if (dim == HELLWAY) {
+            tickHellway(player, data);
         }
     }
 
@@ -114,12 +140,7 @@ public final class Journey {
                 if (level == null) {
                     return;
                 }
-                if (player.level().dimension() == Level.OVERWORLD) {
-                    data.putDouble("fd_rx", player.getX());
-                    data.putDouble("fd_ry", player.getY());
-                    data.putDouble("fd_rz", player.getZ());
-                    data.putBoolean("fd_has_return", true);
-                }
+                rememberReturn(player);
                 Structures.ensureWonderland(level);
                 data.putInt(WATCH, 20 * 25);
                 player.teleportTo(level, 0.0D, GROUND + 1, -2.5D, 0.0F, 0.0F);
@@ -150,6 +171,16 @@ public final class Journey {
                 player.teleportTo(level, 0.5D, y, 0.5D, 0.0F, 0.0F);
                 player.playNotifySound(SoundEvents.AMBIENT_CAVE.value(), SoundSource.AMBIENT, 1.0F, 0.7F);
             }
+            case HELLWAY -> {
+                ServerLevel level = server.getLevel(HELLWAY);
+                if (level == null) {
+                    return;
+                }
+                rememberReturn(player);
+                data.putInt(HELL, 20 * 20);
+                player.teleportTo(level, DreamChunkGenerator.HELL_WIDTH / 2.0D, DreamChunkGenerator.HELL_FLOOR, 0.5D, 0.0F, 0.0F);
+                player.playNotifySound(SoundEvents.AMBIENT_CAVE.value(), SoundSource.AMBIENT, 1.0F, 0.5F);
+            }
             case ALIVE -> toOverworld(player, true);
         }
     }
@@ -174,13 +205,7 @@ public final class Journey {
         player.teleportTo(overworld, x, y, z, player.getYRot(), 0.0F);
         data.putInt(CD, 100);
         if (alive) {
-            Advancement adv = server.getAdvancements().getAdvancement(FinDiaries.rl("alive"));
-            if (adv != null) {
-                AdvancementProgress progress = player.getAdvancements().getOrStartProgress(adv);
-                for (String criterion : new ArrayList<>(toList(progress.getRemainingCriteria()))) {
-                    player.getAdvancements().award(adv, criterion);
-                }
-            }
+            award(player, "alive");
         }
     }
 
@@ -261,6 +286,34 @@ public final class Journey {
         level.addFreshEntity(danger);
         player.playNotifySound(SoundEvents.ELDER_GUARDIAN_CURSE, SoundSource.HOSTILE, 1.0F, 0.6F);
         player.playNotifySound(SoundEvents.AMBIENT_CAVE.value(), SoundSource.HOSTILE, 1.0F, 0.5F);
+        return true;
+    }
+
+    private static void tickHellway(ServerPlayer player, CompoundTag data) {
+        int t = data.getInt(HELL) - 1;
+        if (t <= 0) {
+            t = 20 * (25 + RNG.nextInt(30));
+            if (RNG.nextInt(100) < 55) {
+                spawnDemon(player.serverLevel(), player);
+            }
+        }
+        data.putInt(HELL, t);
+    }
+
+    public static boolean spawnDemon(ServerLevel level, ServerPlayer player) {
+        if (!level.getEntitiesOfClass(RedDemonEntity.class, player.getBoundingBox().inflate(200.0D)).isEmpty()) {
+            return false;
+        }
+        RedDemonEntity demon = ModRegistry.RED_DEMON.get().create(level);
+        if (demon == null) {
+            return false;
+        }
+        double z = player.getZ() + (RNG.nextBoolean() ? 46.0D : -46.0D);
+        double x = level.dimension() == HELLWAY ? DreamChunkGenerator.HELL_WIDTH / 2.0D : player.getX();
+        double y = level.dimension() == HELLWAY ? DreamChunkGenerator.HELL_FLOOR : player.getY();
+        demon.moveTo(x, y, z, 0.0F, 0.0F);
+        level.addFreshEntity(demon);
+        level.playSound(null, demon.blockPosition(), ModRegistry.SCREAM.get(), SoundSource.HOSTILE, 4.0F, 0.8F);
         return true;
     }
 

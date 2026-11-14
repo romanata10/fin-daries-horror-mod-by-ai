@@ -24,5 +24,14 @@
         "name": "findiaries:steps"
       }
     ]
+  },
+  "scream": {
+    "subtitle": "subtitles.findiaries.scream",
+    "sounds": [
+      {
+        "name": "findiaries:scream",
+        "attenuation_distance": 96
+      }
+    ]
   }
 }

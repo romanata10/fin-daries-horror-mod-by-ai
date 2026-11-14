@@ -16,6 +16,7 @@ final class Geo {
     private double fx = 0.0D, fz = 1.0D;
     private double k = 1.0D;
     private int alpha = 255;
+    private double rollCos = 1.0D, rollSin = 0.0D;
 
     Geo(BufferBuilder buf, Matrix4f mat) {
         this.buf = buf;
@@ -31,9 +32,19 @@ final class Geo {
         this.fz = forwardZ;
         this.k = scale;
         this.alpha = Math.max(0, Math.min(255, (int) (alpha * 255.0F)));
+        this.rollCos = 1.0D;
+        this.rollSin = 0.0D;
     }
 
-    private void v(double x, double y, double z, int rgb, float shade) {
+    /** Banks the object around its forward axis (until the next begin). */
+    void roll(double angle) {
+        this.rollCos = Math.cos(angle);
+        this.rollSin = Math.sin(angle);
+    }
+
+    private void v(double lx, double ly, double z, int rgb, float shade) {
+        double x = lx * this.rollCos - ly * this.rollSin;
+        double y = lx * this.rollSin + ly * this.rollCos;
         double wx = x * this.fz + z * this.fx;
         double wz = -x * this.fx + z * this.fz;
         int r = Math.min(255, (int) (((rgb >> 16) & 255) * shade));

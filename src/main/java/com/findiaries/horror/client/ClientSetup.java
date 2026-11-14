@@ -12,6 +12,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(TallHumanModel.LAYER, TallHumanModel::createLayer);
+        event.registerLayerDefinition(FlowerManModel.LAYER, FlowerManModel::createLayer);
     }
 
     @SubscribeEvent
@@ -24,6 +25,15 @@ public final class ClientSetup {
                 c -> new ApparitionRenderer<>(c, FinDiaries.rl("textures/entity/danger_12.png"), TallHumanModel.Shape.DANGER_12));
         event.registerEntityRenderer(ModRegistry.BLUE_STRANGER.get(),
                 c -> new ApparitionRenderer<>(c, FinDiaries.rl("textures/entity/blue_stranger.png"), TallHumanModel.Shape.BLUE_STRANGER));
+        event.registerEntityRenderer(ModRegistry.WANDERER.get(),
+                c -> new ApparitionRenderer<>(c, FinDiaries.rl("textures/entity/wanderer.png"), TallHumanModel.Shape.WANDERER));
+        event.registerEntityRenderer(ModRegistry.SHE.get(),
+                c -> new ApparitionRenderer<>(c, FinDiaries.rl("textures/entity/she.png"), TallHumanModel.Shape.SHE));
+        event.registerEntityRenderer(ModRegistry.RED_DEMON.get(),
+                c -> new ApparitionRenderer<>(c, FinDiaries.rl("textures/entity/red_demon.png"), TallHumanModel.Shape.RED_DEMON));
+        event.registerEntityRenderer(ModRegistry.SKY_PERSON.get(),
+                c -> new ApparitionRenderer<>(c, FinDiaries.rl("textures/entity/sky_person.png"), TallHumanModel.Shape.SKY_PERSON));
+        event.registerEntityRenderer(ModRegistry.FLOWER_MAN.get(), FlowerManRenderer::new);
     }
 
     private ClientSetup() {
