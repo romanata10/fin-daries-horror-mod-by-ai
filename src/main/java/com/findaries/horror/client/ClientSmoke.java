@@ -296,10 +296,10 @@ public final class ClientSmoke {
             for (int i = 0; i < types.size(); i++) {
                 Entity e = types.get(i).create(level);
                 e.setNoGravity(true);
-                e.moveTo(p.getX() - 10.0D + i * 5.0D, p.getY() - 2.0D, p.getZ() + 14.0D, 180.0F, 0.0F);
+                e.moveTo(p.getX() - 8.0D + i * 4.0D, p.getY(), p.getZ() + 10.0D, 180.0F, 0.0F);
                 level.addFreshEntity(e);
             }
-            fly(p, p.getX(), p.getY(), p.getZ(), 0.0F, 3.0F);
+            fly(p, p.getX(), p.getY() + 2.0D, p.getZ(), 0.0F, 9.0F);
         }));
         step(45, () -> shot("31_new_entities"));
         // ---- the_wonderdream ----
@@ -340,10 +340,11 @@ public final class ClientSmoke {
             ClientPhenomena.debugClear();
         });
         step(2, () -> {
-            server(p -> fly(p, p.getX(), p.getY() + 8.0D, p.getZ(), 0.0F, -28.0F));
-            ClientPhenomena.debugShow(ahead(PhenomenonPacket.GIANT_NEVELIM, 210.0D, 0.0D), 152);
+            server(p -> fly(p, p.getX(), p.getY() + 8.0D, p.getZ(), 0.0F, -12.0F));
+            ClientPhenomena.debugShow(ahead(PhenomenonPacket.GIANT_NEVELIM, -110.0D, 0.0D), 152);
         });
-        step(22, () -> shot("37_giant_nevelim"));
+        step(45, () -> shot("37_giant_nevelim"));
+        step(70, () -> shot("37b_giant_explosion"));
         // ---- the wrong house and the hole ----
         step(2, () -> {
             ClientPhenomena.debugClear();
@@ -355,7 +356,7 @@ public final class ClientSmoke {
                 Structures.buildWrongHouse(level, x, hy, z + 32);
                 int dy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x + 15, z + 20);
                 Structures.buildHole(level, x + 15, dy, z + 20);
-                fly(p, x + 0.5D, hy + 14.0D, z - 8.0D, 0.0F, 24.0F);
+                fly(p, x + 7.5D, hy + 15.0D, z - 4.0D, 0.0F, 22.0F);
             });
         });
         step(70, () -> shot("38_wrong_house_hole"));

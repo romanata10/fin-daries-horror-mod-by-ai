@@ -143,8 +143,13 @@ public final class ClientPhenomena {
     // ---------------------------------------------------------------------------------------------
 
     private static boolean inDream(Minecraft mc) {
-        return mc.level != null && mc.level.dimension().location().getNamespace().equals(FinDaries.MODID)
-                && !mc.level.dimension().location().getPath().equals("hellway");
+        if (mc.level == null || !mc.level.dimension().location().getNamespace().equals(FinDaries.MODID)) {
+            return false;
+        }
+        return switch (mc.level.dimension().location().getPath()) {
+            case "wonderland", "hallway", "wonderflowers", "cage_wonderland" -> true;
+            default -> false; // hellway, the_wonderdream and stonehell have the normal version
+        };
     }
 
     private static boolean lyingTriangle() {
@@ -256,7 +261,10 @@ public final class ClientPhenomena {
         if (ACTIVE.isEmpty()) {
             return;
         }
-        boolean sky = event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY;
+        // Clouds are drawn AFTER_SKY: draw the sky objects once more after the weather so
+        // that they cover the clouds instead of having cloud shapes punched through them.
+        boolean sky = event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY
+                || event.getStage() == RenderLevelStageEvent.Stage.AFTER_WEATHER;
         boolean world = event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES;
         if (!sky && !world) {
             return;
@@ -286,7 +294,7 @@ public final class ClientPhenomena {
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableCull();
         RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
+        RenderSystem.depthMask(world);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
@@ -314,10 +322,7 @@ public final class ClientPhenomena {
         }
         tesselator.end();
 
-        if (sky) {
-            // sky objects were drawn shrunk towards the camera; drop their depth so the world covers them
-            RenderSystem.clear(256, Minecraft.ON_OSX);
-        }
+        RenderSystem.depthMask(true);
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
 
@@ -388,7 +393,7 @@ public final class ClientPhenomena {
         final double r = 215.0D, hh = 235.0D;
         drawCone(g, r, hh, 0x05070B);
         if (eyes) {
-            double z = r * 0.34D, cy = hh * 0.28D;
+            double z = -r * 0.34D, cy = hh * 0.28D;
             oval(g, z, -r * 0.20D, cy, 42.0D, 27.0D, 0xF7F5EE);
             oval(g, z, r * 0.20D, cy, 42.0D, 27.0D, 0xF7F5EE);
         }
@@ -406,8 +411,8 @@ public final class ClientPhenomena {
         }
         for (int i = 0; i < 8; i++) {
             int j = (i + 1) & 7;
-            g.tri(0.0D, 0.0D, thick, xs[i], ys[i], thick, xs[j], ys[j], thick, 0xB9E3FF, 1.0F);
-            g.tri(0.0D, 0.0D, -thick, xs[j], ys[j], -thick, xs[i], ys[i], -thick, 0x5487C8, 0.9F);
+            g.tri(0.0D, 0.0D, -thick, xs[i], ys[i], -thick, xs[j], ys[j], -thick, 0xB9E3FF, 1.0F);
+            g.tri(0.0D, 0.0D, thick, xs[j], ys[j], thick, xs[i], ys[i], thick, 0x5487C8, 0.9F);
             g.quad(xs[i], ys[i], -thick, xs[j], ys[j], -thick, xs[j], ys[j], thick, xs[i], ys[i], thick, 0x7FB6EF, 0.95F);
         }
         Random r = new Random(a.seed);
@@ -428,7 +433,9 @@ public final class ClientPhenomena {
     private static void drawGiant(Geo g, Active a, float t, Vec3 cam) {
         double rise = Math.min(1.0D, t / 70.0D);
         double sink = -860.0D * (1.0D - rise);
-        g.begin(a.x - cam.x, a.y - cam.y + sink, a.z - cam.z, 0.0D, 1.0D, 1.0D, fade(t, 300, 24.0F));
+        double dx = a.x - cam.x, dy = a.y - cam.y + sink, dz = a.z - cam.z;
+        double k = Math.min(1.0D, 100.0D / (Math.sqrt(dx * dx + dy * dy + dz * dz) + 430.0D));
+        g.begin(dx * k, dy * k, dz * k, 0.0D, 1.0D, k, fade(t, 300, 24.0F));
         final int body = 0x171820, head = 0x0B0C11;
         g.box(-30, 0, -14, 30, 690, 14, body, true);
         g.box(-42, 690, -18, 42, 860, 18, head, true);

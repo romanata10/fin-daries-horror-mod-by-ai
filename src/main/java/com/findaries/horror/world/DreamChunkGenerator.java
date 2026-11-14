@@ -558,7 +558,7 @@ public class DreamChunkGenerator extends ChunkGenerator {
                     c.set(x, y0 + 1, z, torch);
                     c.set(x, y0 + 8, z, torch);
                 }
-                if (mx == 12 && mz == 12) {
+                if ((mx == 3 && mz == 12) || (mx == 12 && mz == 3) || (mx == 12 && mz == 12)) {
                     c.set(x, y0 + 5, z, lamp);
                     c.set(x, y0 + 12, z, lamp);
                 }
@@ -650,6 +650,11 @@ public class DreamChunkGenerator extends ChunkGenerator {
                 }
             }
         }
+        for (int z = c.minZ; z <= c.maxZ; z++) {
+            if (Math.floorMod(z, 16) == 0) {
+                c.set(2, HELL_FLOOR + HELL_HEIGHT - 1, z, Blocks.SEA_LANTERN.defaultBlockState());
+            }
+        }
         for (int seg = Math.floorDiv(c.minZ, 64) - 1; seg <= Math.floorDiv(c.maxZ, 64) + 1; seg++) {
             if (Math.floorMod(hash(seg, 0, 555), 7) != 0) {
                 continue;
@@ -676,6 +681,8 @@ public class DreamChunkGenerator extends ChunkGenerator {
             c.set(11, HELL_FLOOR, z0 + 33, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.WEST));
             c.set(12, HELL_FLOOR, z0 + 33, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.WEST));
             c.set(9, HELL_FLOOR + 4, z0 + 36, Blocks.SEA_LANTERN.defaultBlockState());
+            c.set(6, HELL_FLOOR + 4, z0 + 33, Blocks.SEA_LANTERN.defaultBlockState());
+            c.set(13, HELL_FLOOR + 4, z0 + 40, Blocks.SEA_LANTERN.defaultBlockState());
             for (int y = HELL_FLOOR; y <= HELL_FLOOR + 2; y++) {
                 c.set(13, y, z0 + 39, ModRegistry.WONDERDREAM_PORTAL.get().defaultBlockState());
             }

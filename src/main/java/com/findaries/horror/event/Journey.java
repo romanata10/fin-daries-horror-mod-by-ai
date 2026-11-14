@@ -269,8 +269,11 @@ public final class Journey {
             if (copy == null) {
                 continue;
             }
-            double a = Math.PI * 2.0D * i / n + RNG.nextDouble();
-            double x = player.getX() + Math.cos(a) * 17.0D, z = player.getZ() + Math.sin(a) * 17.0D;
+            // stand in front of the player, where he is looking, never behind a wall
+            double yaw = Math.toRadians(player.getYRot());
+            double a = yaw + (i - (n - 1) * 0.5D) * 0.45D + (RNG.nextDouble() - 0.5D) * 0.18D;
+            double x = player.getX() - Math.sin(a) * 14.0D;
+            double z = player.getZ() + Math.cos(a) * 14.0D;
             copy.moveTo(x, player.getY(), z, 0.0F, 0.0F);
             copy.impersonate(name);
             level.addFreshEntity(copy);
