@@ -34,13 +34,22 @@
 4. **cage_wonderland** — стены из дерева, невероятно высокие деревья, холмы и вода. В одной из стен — дыра с белым
    порталом: выход в обычный мир и достижение **alive**.
 
-## Команды (нужны права оператора / читы)
+## Команды
+
+В одиночной игре работают всегда, на сервере — только у операторов. Вместо `/findiaries` можно писать `/fd`.
 
 ```
-/findiaries triangle | longlegs | blue_stranger | slab | mushrooms | tower | ufo | portal
-/findiaries watcher | danger_12
-/findiaries tp wonderland | hallway | wonderflowers | cage | overworld
+/fd summon kill000145236 | longlegs | watcher | danger_12 | blue_stranger   — призвать существо перед собой
+/fd tp wonderland | hallway | house | wonderflowers | cage | overworld      — телепорт по мирам мода
+/fd event triangle | longlegs | blue_stranger | slab | mushrooms | tower | ufo | portal | random
 ```
+
+Существа первые 3 секунды после появления не реагируют на игрока — успей отойти.
+
+## Вкладка в креативе
+
+Вкладка **Fin Diaries Horror**: четыре портала (блоки), яйца призыва всех существ, предметы-«события»
+(ПКМ запускает треугольник, плиту, НЛО, грибы, башню, длиннонога за деревом, появление портала) и записка из wonderland.
 
 Частота событий настраивается в `config/findiaries-common.toml` (`eventMinSeconds`, `eventMaxSeconds`).
 
@@ -52,7 +61,7 @@
 ./gradlew build
 ```
 
-Готовый мод: `build/libs/findiaries-0.1.0.jar` — положи его в папку `mods`.
+Готовый мод: `build/libs/findiaries-0.2.0.jar` — положи его в папку `mods`.
 Тот же jar собирается автоматически в GitHub Actions (вкладка **Actions → build → Artifacts → findiaries-mod**).
 
 `./gradlew runClient` запускает игру с модом для разработки.

@@ -42,7 +42,6 @@ jobs:
 
       - name: Client self-test
         id: client
-        continue-on-error: true
         run: |
           set -o pipefail
           sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null

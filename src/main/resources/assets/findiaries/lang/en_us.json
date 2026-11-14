@@ -1,8 +1,8 @@
 {
-  "block.findiaries.wonderland_portal": "wonderland.avi",
-  "block.findiaries.hall_portal": "Doorway",
-  "block.findiaries.dots_portal": "Dots",
-  "block.findiaries.white_portal": "Exit",
+  "block.findiaries.wonderland_portal": "wonderland.avi Portal",
+  "block.findiaries.hall_portal": "Corridor Portal",
+  "block.findiaries.dots_portal": "Dots Portal (cage_wonderland)",
+  "block.findiaries.white_portal": "White Exit Portal",
   "entity.findiaries.kill000145236": "kill000145236",
   "entity.findiaries.watcher": "???",
   "entity.findiaries.danger_12": "danger_12",
@@ -11,5 +11,19 @@
   "subtitles.findiaries.hum": "Low hum",
   "subtitles.findiaries.steps": "Fast footsteps",
   "advancements.findiaries.alive.title": "alive",
-  "advancements.findiaries.alive.description": "You walked out of cage_wonderland."
+  "advancements.findiaries.alive.description": "You walked out of cage_wonderland.",
+  "itemGroup.findiaries": "Fin Diaries Horror",
+  "tooltip.findiaries.event": "Right click to start the event",
+  "message.findiaries.no_place": "No suitable place nearby",
+  "item.findiaries.kill000145236_spawn_egg": "kill000145236 Spawn Egg",
+  "item.findiaries.watcher_spawn_egg": "Watcher Spawn Egg",
+  "item.findiaries.danger_12_spawn_egg": "danger_12 Spawn Egg",
+  "item.findiaries.blue_stranger_spawn_egg": "Blue Stranger Spawn Egg",
+  "item.findiaries.event_triangle": "Event: Black Triangle",
+  "item.findiaries.event_slab": "Event: Slab With Lights",
+  "item.findiaries.event_ufo": "Event: 1000 Block UFO",
+  "item.findiaries.event_mushrooms": "Event: Mushrooms On Legs",
+  "item.findiaries.event_tower": "Event: Rising Tower",
+  "item.findiaries.event_longlegs": "Event: kill000145236 Behind A Tree",
+  "item.findiaries.event_portal": "Event: wonderland.avi Portal Appears"
 }

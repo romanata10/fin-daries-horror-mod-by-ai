@@ -22,6 +22,9 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /** Decides when something happens to the player in the overworld, and makes it happen. */
 public final class HorrorDirector {
@@ -133,33 +137,91 @@ public final class HorrorDirector {
 
     @SubscribeEvent
     public static void onCommands(RegisterCommandsEvent event) {
-        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("findiaries").requires(s -> s.hasPermission(2));
-        for (String name : EVENTS.keySet()) {
-            root.then(Commands.literal(name).executes(ctx -> {
+        // /findiaries and the short form /fd. Always available in singleplayer, operators only on servers.
+        for (String rootName : new String[]{"findiaries", "fd"}) {
+            LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(rootName)
+                    .requires(s -> s.hasPermission(2) || !s.getServer().isDedicatedServer());
+
+            // /fd summon <entity> - puts the entity a few blocks in front of you
+            LiteralArgumentBuilder<CommandSourceStack> summon = Commands.literal("summon");
+            Map<String, Supplier<? extends EntityType<? extends Mob>>> entities = new LinkedHashMap<>();
+            entities.put("kill000145236", ModRegistry.LONGLEGS);
+            entities.put("longlegs", ModRegistry.LONGLEGS);
+            entities.put("watcher", ModRegistry.WATCHER);
+            entities.put("danger_12", ModRegistry.DANGER_12);
+            entities.put("blue_stranger", ModRegistry.BLUE_STRANGER);
+            entities.forEach((name, type) -> summon.then(Commands.literal(name).executes(ctx -> {
                 ServerPlayer player = ctx.getSource().getPlayerOrException();
-                boolean ok = EVENTS.get(name).run.apply(player);
-                ctx.getSource().sendSuccess(() -> Component.literal(name + (ok ? " ..." : ": no suitable place nearby")), false);
+                boolean ok = summon(player, type.get());
+                ctx.getSource().sendSuccess(() -> Component.literal(ok ? name + " is here." : "Could not summon " + name), false);
                 return ok ? 1 : 0;
-            }));
-        }
-        root.then(Commands.literal("watcher").executes(ctx -> {
-            ServerPlayer player = ctx.getSource().getPlayerOrException();
-            return Journey.spawnWatcher(player.serverLevel(), player) ? 1 : 0;
-        }));
-        root.then(Commands.literal("danger_12").executes(ctx -> {
-            ServerPlayer player = ctx.getSource().getPlayerOrException();
-            return Journey.spawnDanger(player.serverLevel(), player) ? 1 : 0;
-        }));
-        LiteralArgumentBuilder<CommandSourceStack> tp = Commands.literal("tp");
-        for (Journey.Dest dest : Journey.Dest.values()) {
-            String name = dest == Journey.Dest.ALIVE ? "overworld" : dest.name().toLowerCase(java.util.Locale.ROOT);
-            tp.then(Commands.literal(name).executes(ctx -> {
-                Journey.go(ctx.getSource().getPlayerOrException(), dest);
+            })));
+            root.then(summon);
+
+            // /fd event <name> - starts one of the random events right now
+            LiteralArgumentBuilder<CommandSourceStack> events = Commands.literal("event");
+            for (String name : EVENTS.keySet()) {
+                events.then(Commands.literal(name).executes(ctx -> {
+                    ServerPlayer player = ctx.getSource().getPlayerOrException();
+                    boolean ok = EVENTS.get(name).run.apply(player);
+                    ctx.getSource().sendSuccess(() -> Component.literal(name + (ok ? " ..." : ": no suitable place nearby")), false);
+                    return ok ? 1 : 0;
+                }));
+            }
+            events.then(Commands.literal("random").executes(ctx -> {
+                fireRandom(ctx.getSource().getPlayerOrException());
                 return 1;
             }));
+            root.then(events);
+
+            // /fd tp <world>
+            LiteralArgumentBuilder<CommandSourceStack> tp = Commands.literal("tp");
+            for (Journey.Dest dest : Journey.Dest.values()) {
+                String name = dest == Journey.Dest.ALIVE ? "overworld" : dest.name().toLowerCase(java.util.Locale.ROOT);
+                tp.then(Commands.literal(name).executes(ctx -> {
+                    Journey.go(ctx.getSource().getPlayerOrException(), dest);
+                    return 1;
+                }));
+            }
+            tp.then(Commands.literal("house").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                ServerLevel level = player.server.getLevel(Journey.HALLWAY);
+                if (level == null) {
+                    return 0;
+                }
+                Structures.ensureHallway(level);
+                player.teleportTo(level, 0.5D, Structures.HALL_Y + 1, Structures.HOUSE_Z + 0.8D, 0.0F, 0.0F);
+                return 1;
+            }));
+            root.then(tp);
+            event.getDispatcher().register(root);
         }
-        root.then(tp);
-        event.getDispatcher().register(root);
+    }
+
+    /** Puts an entity of the mod about ten blocks in front of the player. */
+    public static boolean summon(ServerPlayer player, EntityType<? extends Mob> type) {
+        ServerLevel level = player.serverLevel();
+        Mob mob = type.create(level);
+        if (mob == null) {
+            return false;
+        }
+        double angle = viewAngle(player, 0.0D);
+        double x = player.getX() + Math.cos(angle) * 10.0D;
+        double z = player.getZ() + Math.sin(angle) * 10.0D;
+        double y = player.getY();
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (int dy = 6; dy >= -6; dy--) {
+            p.set(Mth.floor(x), player.getBlockY() + dy, Mth.floor(z));
+            if (standable(level, p)) {
+                y = p.getY();
+                break;
+            }
+        }
+        float yaw = (float) (Math.atan2(player.getZ() - z, player.getX() - x) * (180.0D / Math.PI)) - 90.0F;
+        mob.moveTo(x, y, z, yaw, 0.0F);
+        mob.yHeadRot = yaw;
+        mob.yBodyRot = yaw;
+        return level.addFreshEntity(mob);
     }
 
     // ---------------------------------------------------------------------------------------------

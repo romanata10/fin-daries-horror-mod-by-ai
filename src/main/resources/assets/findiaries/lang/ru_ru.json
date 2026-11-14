@@ -1,8 +1,8 @@
 {
-  "block.findiaries.wonderland_portal": "wonderland.avi",
-  "block.findiaries.hall_portal": "Проход",
-  "block.findiaries.dots_portal": "Точки",
-  "block.findiaries.white_portal": "Выход",
+  "block.findiaries.wonderland_portal": "Портал wonderland.avi",
+  "block.findiaries.hall_portal": "Портал в коридор",
+  "block.findiaries.dots_portal": "Портал из точек (cage_wonderland)",
+  "block.findiaries.white_portal": "Белый портал-выход",
   "entity.findiaries.kill000145236": "kill000145236",
   "entity.findiaries.watcher": "???",
   "entity.findiaries.danger_12": "danger_12",
@@ -11,5 +11,19 @@
   "subtitles.findiaries.hum": "Низкий гул",
   "subtitles.findiaries.steps": "Быстрые шаги",
   "advancements.findiaries.alive.title": "alive",
-  "advancements.findiaries.alive.description": "Ты вышел из cage_wonderland."
+  "advancements.findiaries.alive.description": "Ты вышел из cage_wonderland.",
+  "itemGroup.findiaries": "Fin Diaries Horror",
+  "tooltip.findiaries.event": "ПКМ — запустить событие",
+  "message.findiaries.no_place": "Рядом нет подходящего места",
+  "item.findiaries.kill000145236_spawn_egg": "Яйцо призыва kill000145236",
+  "item.findiaries.watcher_spawn_egg": "Яйцо призыва наблюдателя",
+  "item.findiaries.danger_12_spawn_egg": "Яйцо призыва danger_12",
+  "item.findiaries.blue_stranger_spawn_egg": "Яйцо призыва синего странника",
+  "item.findiaries.event_triangle": "Событие: чёрный треугольник",
+  "item.findiaries.event_slab": "Событие: плита с огнями",
+  "item.findiaries.event_ufo": "Событие: НЛО на 1000 блоков",
+  "item.findiaries.event_mushrooms": "Событие: грибы на лапах",
+  "item.findiaries.event_tower": "Событие: башня",
+  "item.findiaries.event_longlegs": "Событие: длинноног за деревом",
+  "item.findiaries.event_portal": "Событие: появление портала wonderland.avi"
 }

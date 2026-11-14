@@ -17,6 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public abstract class ApparitionEntity extends Mob {
     protected int maxLife = 20 * 120;
+    /** Ticks after spawning during which it does not react to players (so it can be placed by hand). */
+    protected int grace = 60;
 
     protected ApparitionEntity(EntityType<? extends ApparitionEntity> type, Level level) {
         super(type, level);
@@ -77,7 +79,9 @@ public abstract class ApparitionEntity extends Mob {
         Player nearest = this.level().getNearestPlayer(this, 128.0D);
         if (nearest instanceof ServerPlayer player) {
             this.getLookControl().setLookAt(player, 30.0F, 30.0F);
-            this.nearPlayer(player, this.distanceTo(player));
+            if (this.tickCount > this.grace) {
+                this.nearPlayer(player, this.distanceTo(player));
+            }
         }
     }
 

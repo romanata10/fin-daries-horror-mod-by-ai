@@ -171,3 +171,52 @@ while pos < 3.3:
 save('steps', steps)
 
 print('assets written to', os.path.normpath(ROOT))
+
+# --- creative tab icons for the event items -------------------------------------------------------
+TEX_ITEM = os.path.join(ROOT, 'textures', 'item')
+os.makedirs(TEX_ITEM, exist_ok=True)
+ICON_COLOURS = {
+    '.': (0, 0, 0, 0), 'k': (8, 8, 11, 255), 'd': (40, 44, 52, 255), 's': (95, 104, 116, 255),
+    'g': (63, 210, 79, 255), 'o': (232, 130, 46, 255), 'y': (245, 214, 32, 255), 'p': (220, 202, 204, 255),
+    'q': (190, 170, 176, 255), 'c': (122, 122, 122, 255), 'w': (200, 200, 200, 255), 'b': (120, 85, 50, 255),
+    'G': (60, 150, 50, 255), 'S': (191, 143, 120, 255), 'T': (0, 168, 168, 255), 'B': (74, 58, 191, 255),
+    'm': (105, 125, 95, 255),
+}
+ICONS = {
+    'event_triangle': [
+        "................", "................", ".......kk.......", ".......kk.......", "......kkkk......", "......kkkk......",
+        ".....kkkkkk.....", ".....kkkkkk.....", "....kkkkkkkk....", "....kkkkkkkk....", "...kkkkkkkkkk...", "...kkkkkkkkkk...",
+        "..kkkkkkkkkkkk..", "..dddddddddddd..", "................", "................"],
+    'event_slab': [
+        "................", "................", "................", "................", "................", "..dddddddddddd..",
+        ".dgddoddgddoddd.", ".dgddoddgddoddd.", ".dddddddddddddd.", "..kkkkkkkkkkkk..", "................", "................",
+        "................", "................", "................", "................"],
+    'event_ufo': [
+        "................", "................", "....dddddddd....", "...ddsdddddsd...", "..dddsdddsdddd..", ".ddsdddsdddsddd.",
+        ".dddddsddddddsd.", ".dsdyyddsddsddd.", ".ddyyyydddsdddd.", ".ddyyyydsdddsdd.", "..ddyydddddsdd..", "...dsddydsddd...",
+        "....dddddddd....", "................", "................", "................"],
+    'event_mushrooms': [
+        "................", ".....pppppp.....", "...pppppppppp...", "..pppppppppppp..", "..pppppppppppp..", "...qqqqqqqqqq...",
+        "......qqqq......", "....qqq..qqq....", "...qq.q..q.qq...", "..qq..q..q..qq..", "..q...q..q...q..", ".qq...q..q...qq.",
+        ".q....q..q....q.", ".q....q..q....q.", ".q....q..q....q.", "................"],
+    'event_tower': [
+        ".....dddddd.....", ".....dydddd.....", ".y...dyddyd.....", ".....ddddyd..y..", ".....dyddds.....", ".....dydddd.....",
+        ".....dddyds.....", "..y..dsdydd.....", ".....dddddd...y.", ".....dyddyd.....", ".....dydddd.....", ".....ddddyd.....",
+        ".....dsddyd.....", ".....dddddd.....", "..cccccccccccc..", "................"],
+    'event_longlegs': [
+        "......bbbb......", "......SSSS......", "......SSSS......", ".....TTTTTT.....", ".....TTTTTT.....", ".....STTTTS.....",
+        ".....SBBBBS.....", "......B..B..GG..", "......B..B.GGGG.", "......B..B.GGGG.", "......B..B..GG..", "......B..B..bb..",
+        "......B..B..bb..", "......B..B..bb..", "......c..c..bb..", "................"],
+    'event_portal': [
+        "................", "..mmmmmmmmmmmm..", "..mmmmmmmmmmmm..", "..mmwkwswkwkmm..", "..mmkswkkwswmm..", "..mmwkkwskkwmm..",
+        "..mmskwkwwskmm..", "..mmwwkskwkwmm..", "..mmkwswkkswmm..", "..mmwkkwwskkmm..", "..mmskwkswkwmm..", "..mmwskwkkwsmm..",
+        "..mmmmmmmmmmmm..", "..mmmmmmmmmmmm..", "................", "................"],
+}
+for name, rows in ICONS.items():
+    assert len(rows) == 16 and all(len(r) == 16 for r in rows), name
+    img = Image.new('RGBA', (16, 16))
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            img.putpixel((x, y), ICON_COLOURS[ch])
+    img.save(os.path.join(TEX_ITEM, name + '.png'))
+print('item icons written')
