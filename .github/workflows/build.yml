@@ -5,14 +5,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 75
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -45,7 +43,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri imagemagick > /dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
           mkdir -p run
           printf 'onboardAccessibility:false\npauseOnLostFocus:false\nrenderDistance:10\nsimulationDistance:6\ntutorialStep:none\nsoundCategory_master:0.0\nnarrator:0\nfov:0.0\nmaxFps:60\ngraphicsMode:1\nrenderClouds:"true"\n' > run/options.txt
           rm -rf run/saves/fd_smoke
@@ -61,21 +59,3 @@ jobs:
             run/screenshots/*.png
             run/logs/latest.log
             run/crash-reports/*
-
-      - name: Report
-        if: always()
-        run: |
-          post() { # title file
-            { echo "### $1"; echo; echo '```'; tail -c 55000 "$2"; echo '```'; } > body.md
-            gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" -F body=@body.md > /dev/null || true
-          }
-          if [ -f build.log ]; then grep -n -B2 -A12 -E "error:|warning: \[|FAILED|What went wrong" build.log | head -c 50000 > build.short || true; [ -s build.short ] || tail -n 40 build.log > build.short; post "build" build.short; fi
-          if [ -f server.log ]; then grep -n -E "FINDIARIES|findiaries|ERROR|Exception|Caused by|^\s+at com\.findiaries|FATAL|Crash|crash" server.log | head -c 50000 > server.short || true; post "server" server.short; fi
-          if [ -f client.log ]; then grep -n -E "FINDIARIES|findiaries|ERROR|Exception|Caused by|^\s+at com\.findiaries|FATAL|Crash|crash|Missing|Unable to" client.log | head -c 50000 > client.short || true; post "client (${{ steps.client.outcome }})" client.short; fi
-          for f in run/crash-reports/*; do [ -f "$f" ] && { head -c 30000 "$f" > crash.short; post "crash $(basename "$f")" crash.short; }; done
-          for f in run/screenshots/*.png; do
-            [ -f "$f" ] || continue
-            convert "$f" -resize 640x360 -quality 62 shot.jpg
-            { echo "### shot $(basename "$f" .png)"; echo; echo '```'; base64 -w 0 shot.jpg; echo; echo '```'; } > body.md
-            gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" -F body=@body.md > /dev/null || true
-          done
