@@ -441,13 +441,13 @@ public final class ClientPhenomena {
         g.box(-80, 690, -24, 80, 860, 24, 0x15161C, true);
         g.beam(-60, 850, 0, -140, 940, -10, 12, 0x25262E);
         g.beam(60, 850, 0, 140, 940, -10, 12, 0x25262E);
-        g.box(-60, 810, 25, -24, 832, 27, 0xFF8A22, false);
-        g.box(24, 810, 25, 60, 832, 27, 0xFF8A22, false);
+        g.box(-60, 810, -27, -24, 832, -25, 0xFF8A22, false);
+        g.box(24, 810, -27, 60, 832, -25, 0xFF8A22, false);
         double open = t < 110 ? 3.0D : Math.min(64.0D, (t - 110) * 1.4D);
-        g.box(-52, 742, 25, 52, 742 + open, 27, 0x020203, false);
+        g.box(-52, 742, -27, 52, 742 + open, -25, 0x020203, false);
         if (t >= 130 && t < 225) {
-            g.box(-34, -40, 30, 34, 742, 32, 0xFF6A12, false);
-            g.box(-14, -40, 33, 14, 742, 35, 0xFFC060, false);
+            g.box(-34, -40, -32, 34, 742, -30, 0xFF6A12, false);
+            g.box(-14, -40, -35, 14, 742, -33, 0xFFC060, false);
         }
         if (t >= 215) {
             double burst = Math.min(1.0D, (t - 215) / 28.0D) * 420.0D;
