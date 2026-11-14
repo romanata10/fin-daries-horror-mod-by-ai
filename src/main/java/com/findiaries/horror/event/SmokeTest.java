@@ -76,7 +76,7 @@ public final class SmokeTest {
         load(cage, -6, -6, 6, 6);
         expect(cage, new BlockPos(0, g + 2, DreamChunkGenerator.CAGE_R + 1), ModRegistry.WHITE_PORTAL.get(), "white portal");
         expect(cage, new BlockPos(0, g + 2, DreamChunkGenerator.CAGE_R), Blocks.AIR, "hole in the wall");
-        expect(cage, new BlockPos(40, 200, DreamChunkGenerator.CAGE_R), Blocks.OAK_PLANKS, "wall");
+        expect(cage, new BlockPos(41, 200, DreamChunkGenerator.CAGE_R), Blocks.OAK_PLANKS, "wall");
         expect(cage, new BlockPos(0, g, 0), Blocks.GRASS_BLOCK, "arrival ground");
         int logs = 0, leaves = 0;
         for (int x = -70; x <= 70; x += 2) {
