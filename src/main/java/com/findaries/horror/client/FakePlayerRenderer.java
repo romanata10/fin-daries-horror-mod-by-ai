@@ -3,7 +3,6 @@ package com.findaries.horror.client;
 import com.findaries.horror.entity.FakePlayerEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
@@ -22,8 +21,8 @@ public class FakePlayerRenderer extends MobRenderer<FakePlayerEntity, TallHumanM
         Component custom = entity.getCustomName();
         String name = custom == null ? "" : custom.getString();
         if (!name.isEmpty()) {
-            if (mc.player instanceof AbstractClientPlayer local && name.equals(mc.player.getGameProfile().getName())) {
-                return local.getSkinTextureLocation();
+            if (mc.player != null && name.equals(mc.player.getGameProfile().getName())) {
+                return mc.player.getSkinTextureLocation();
             }
             if (mc.getConnection() != null) {
                 PlayerInfo info = mc.getConnection().getPlayerInfo(name);

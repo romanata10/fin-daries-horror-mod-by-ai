@@ -135,7 +135,7 @@ public final class Journey {
         CompoundTag data = player.getPersistentData();
         data.putInt(CD, 60);
         ResourceKey<Level> from = player.level().dimension();
-        if (from == STONEHELL && dest != STONEHELL) {
+        if (from == STONEHELL && dest != Dest.STONEHELL) {
             // the Giant stops following as soon as you leave the labyrinth
             for (OneEyeGiantEntity giant : ((ServerLevel) player.level()).getEntitiesOfClass(OneEyeGiantEntity.class,
                     player.getBoundingBox().inflate(512.0D))) {

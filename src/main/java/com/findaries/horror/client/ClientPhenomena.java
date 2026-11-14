@@ -345,10 +345,6 @@ public final class ClientPhenomena {
         return true;
     }
 
-    // ---- 1. the black triangle -------------------------------------------------------------------
-
-    private static final double TRIANGLE_SPEED = 6.0D;
-
     // ---- 1. all-black 3D cones (tip always pointing down) -------------------------------------
 
     private static final double TRIANGLE_SPEED = 6.0D;
