@@ -450,9 +450,9 @@ public final class ClientPhenomena {
             g.beam(0, 742, 22, 0, -40, 22, 42, 0xFFB840);
         }
         if (t >= 215) {
-            double k = Math.min(1.0D, (t - 215) / 28.0D) * 280.0D;
-            g.quad(-k, -20, 0, k, -20, 0, k, k * 0.65D, 0, -k, k * 0.65D, 0, 0xFFB03C, 0.85F);
-            g.quad(0, -20, -k, 0, -20, k, 0, k * 0.65D, k, 0, k * 0.65D, -k, 0xFFE0A0, 0.85F);
+            double burst = Math.min(1.0D, (t - 215) / 28.0D) * 280.0D;
+            g.quad(-burst, -20, 0, burst, -20, 0, burst, burst * 0.65D, 0, -burst, burst * 0.65D, 0, 0xFFB03C, 0.85F);
+            g.quad(0, -20, -burst, 0, -20, burst, 0, burst * 0.65D, burst, 0, burst * 0.65D, -burst, 0xFFE0A0, 0.85F);
         }
     }
 
