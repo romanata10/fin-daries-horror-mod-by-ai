@@ -435,7 +435,7 @@ public final class ClientPhenomena {
         double sink = -860.0D * (1.0D - rise);
         double dx = a.x - cam.x, dy = a.y - cam.y + sink, dz = a.z - cam.z;
         double k = Math.min(1.0D, 100.0D / (Math.sqrt(dx * dx + dy * dy + dz * dz) + 430.0D));
-        g.begin(dx * k, dy * k, dz * k, 0.0D, 1.0D, k, fade(t, 300, 24.0F));
+        g.begin(dx, dy, dz, 0.0D, 1.0D, k, fade(t, 300, 24.0F));
         final int body = 0x171820, head = 0x0B0C11;
         g.box(-60, 0, -20, 60, 690, 20, 0x25262E, true);
         g.box(-80, 690, -24, 80, 860, 24, 0x15161C, true);

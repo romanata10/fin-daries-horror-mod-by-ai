@@ -55,6 +55,7 @@ public final class ClientSmoke {
 
     private static final List<Step> STEPS = new ArrayList<>();
     private static int state;
+    private static int holeX, holeY, holeZ;
     private static int index;
     private static int timer;
 
@@ -357,13 +358,15 @@ public final class ClientSmoke {
                 int x = p.getBlockX(), z = p.getBlockZ();
                 int hy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z + 32);
                 Structures.buildWrongHouse(level, x, hy, z + 32);
-                int dy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x + 15, z + 20);
-                Structures.buildHole(level, x + 15, dy, z + 20);
+                holeX = x + 15;
+                holeZ = z + 20;
+                holeY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, holeX, holeZ);
+                Structures.buildHole(level, holeX, holeY, holeZ);
                 fly(p, x + 7.5D, hy + 15.0D, z - 4.0D, 0.0F, 22.0F);
             });
         });
         step(70, () -> shot("38_wrong_house_hole"));
-        step(2, () -> server(p -> fly(p, p.getBlockX() + 15.5D, p.getY(), p.getBlockZ() + 8.0D, 0.0F, 28.0F)));
+        step(2, () -> server(p -> fly(p, holeX + 0.5D, holeY + 7.0D, holeZ - 10.0D, 0.0F, 32.0F)));
         step(60, () -> shot("38b_hole"));
         // ---- thrown to the main menu ----
         step(40, () -> server(Net::kick));
