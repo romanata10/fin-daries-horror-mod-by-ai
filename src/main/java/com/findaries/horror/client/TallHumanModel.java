@@ -23,29 +23,28 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
 
     /** All factors are relative to a normal player (legs/arms/body 12 px long, limbs 4 px thick). */
     public record Shape(float head, float bodyWidth, float bodyHeight, float limbWidth, float armLength, float legLength, float armSpread, boolean horns) {
-        public static final Shape LONGLEGS = new Shape(0.9F, 0.5F, 1.4F, 0.22F, 2.8F, 4.6F, 0.05F, false);
-        public static final Shape BLUE_STRANGER = new Shape(0.9F, 0.5F, 1.6F, 0.22F, 2.2F, 3.2F, 0.05F, false);
-        public static final Shape WATCHER = new Shape(0.5F, 0.22F, 1.6F, 0.12F, 3.0F, 3.8F, 0.35F, false);
-        public static final Shape WANDERER = new Shape(0.6F, 0.35F, 1.8F, 0.14F, 2.9F, 3.6F, Mth.HALF_PI, false);
-        public static final Shape SHE = new Shape(0.6F, 0.3F, 1.8F, 0.14F, 2.2F, 3.4F, 0.03F, false);
+        public static final Shape LONGLEGS = new Shape(0.9F, 0.55F, 1.3F, 0.25F, 2.4F, 3.6F, 0.05F, false);
+        public static final Shape BLUE_STRANGER = new Shape(0.9F, 0.55F, 1.4F, 0.25F, 2.2F, 3.0F, 0.05F, false);
+        public static final Shape WATCHER = new Shape(0.6F, 0.32F, 1.4F, 0.16F, 2.4F, 3.2F, 0.35F, false);
+        public static final Shape WANDERER = new Shape(0.7F, 0.45F, 1.5F, 0.18F, 2.5F, 3.2F, Mth.HALF_PI, false);
+        public static final Shape SHE = new Shape(0.7F, 0.38F, 1.5F, 0.18F, 2.2F, 3.0F, 0.03F, false);
         /** Image-12: extremely thin, horned, almost all legs. */
-        public static final Shape RED_DEMON = new Shape(0.30F, 0.08F, 2.7F, 0.05F, 2.2F, 5.6F, 0.02F, true);
+        public static final Shape RED_DEMON = new Shape(0.45F, 0.14F, 2.2F, 0.08F, 2.2F, 3.9F, 0.02F, true);
         public static final Shape CAVE_DEMON = RED_DEMON;
         public static final Shape SKY_PERSON = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, false);
-        public static final Shape DANGER_12 = new Shape(0.5F, 0.2F, 1.8F, 0.12F, 2.8F, 3.6F, 0.25F, false);
+        public static final Shape DANGER_12 = new Shape(0.6F, 0.28F, 1.5F, 0.16F, 2.4F, 3.2F, 0.25F, false);
         /** Image-19: a wide black rectangle with a small head and two yellow eyes. */
-        public static final Shape ONE_EYE_GIANT = new Shape(0.55F, 1.8F, 3.2F, 0.30F, 0.5F, 2.0F, 0.0F, false);
+        public static final Shape ONE_EYE_GIANT = new Shape(0.7F, 1.3F, 2.6F, 0.30F, 0.6F, 1.8F, 0.0F, false);
         /** Image-22: very tall, very thin, dark navy, cube head with white eyes. */
-        public static final Shape NEVELIM = new Shape(0.50F, 0.16F, 2.9F, 0.07F, 3.6F, 5.0F, 0.02F, false);
+        public static final Shape NEVELIM = new Shape(0.6F, 0.25F, 2.3F, 0.10F, 2.8F, 3.7F, 0.02F, false);
         /** Image-20: a black monolith with a thin blue outline and a dotted head. */
-        public static final Shape EYE = new Shape(0.45F, 1.35F, 2.8F, 0.10F, 0.25F, 1.7F, 0.0F, false);
+        public static final Shape EYE = new Shape(0.6F, 1.1F, 2.2F, 0.14F, 0.4F, 1.5F, 0.0F, false);
     }
 
     private final Shape shape;
     private final ModelPart head;
     private final ModelPart horns;
     private final ModelPart jaw;
-    private final ModelPart shoulders;
     private final ModelPart body;
     private final ModelPart rightArm;
     private final ModelPart leftArm;
@@ -57,7 +56,6 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         this.head = root.getChild("head");
         this.horns = root.getChild("horns");
         this.jaw = root.getChild("jaw");
-        this.shoulders = root.getChild("shoulders");
         this.body = root.getChild("body");
         this.rightArm = root.getChild("right_arm");
         this.leftArm = root.getChild("left_arm");
@@ -70,11 +68,9 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         PartDefinition root = mesh.getRoot();
         root.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -8.0F, -4.0F, 8.0F, 8.0F, 8.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
         root.addOrReplaceChild("horns", CubeListBuilder.create().texOffs(0, 0)
-                .addBox(-4.0F, -17.0F, -0.5F, 1.0F, 9.0F, 1.0F).addBox(3.0F, -17.0F, -0.5F, 1.0F, 9.0F, 1.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
+                .addBox(-4.0F, -14.0F, -0.5F, 1.0F, 6.0F, 1.0F).addBox(3.0F, -14.0F, -0.5F, 1.0F, 6.0F, 1.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
         root.addOrReplaceChild("jaw", CubeListBuilder.create().texOffs(0, 0)
                 .addBox(-3.0F, -2.0F, -5.0F, 6.0F, 2.0F, 1.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
-        root.addOrReplaceChild("shoulders", CubeListBuilder.create().texOffs(16, 16)
-                .addBox(-6.0F, 0.0F, -3.0F, 12.0F, 2.0F, 6.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
         root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(16, 16).addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
         root.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(40, 16).addBox(-3.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F), PartPose.offset(-5.0F, 2.0F, 0.0F));
         root.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(32, 48).addBox(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F), PartPose.offset(5.0F, 2.0F, 0.0F));
@@ -120,8 +116,6 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         place(this.jaw, 0.0F, bodyTop, s.head, s.head, s.head);
         this.jaw.yRot = this.head.yRot;
         this.jaw.xRot = this.head.xRot;
-        place(this.shoulders, 0.0F, bodyTop, s.bodyWidth, s.bodyHeight, s.bodyWidth);
-        this.shoulders.visible = s.bodyWidth > 1.0F;
         place(this.horns, 0.0F, bodyTop, s.head, s.head, s.head);
         this.horns.yRot = this.head.yRot;
         this.horns.xRot = this.head.xRot;
@@ -150,7 +144,6 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         this.head.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.horns.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.jaw.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.shoulders.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.body.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rightArm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.leftArm.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
