@@ -408,15 +408,19 @@ public final class ClientPhenomena {
                          {1, 2, 4}, {1, 4, 3}, {1, 5, 2}, {1, 3, 5}};
         int[] cols = {light, light, mid, mid, mid, dark, dark, dark};
         float[] sh = {1.0F, 0.94F, 0.88F, 0.82F, 0.86F, 0.78F, 0.72F, 0.66F};
+        // First a slightly larger, darker blue shell: only its rim stays visible, which
+        // gives the diamond the soft blurred edge of image-14.
+        for (int i = 0; i < faces.length; i++) {
+            int[] f = faces[i];
+            g.tri(v[f[0]][0] * 1.13D, v[f[0]][1] * 1.13D, v[f[0]][2] * 1.13D,
+                  v[f[1]][0] * 1.13D, v[f[1]][1] * 1.13D, v[f[1]][2] * 1.13D,
+                  v[f[2]][0] * 1.13D, v[f[2]][1] * 1.13D, v[f[2]][2] * 1.13D, 0x5E93D2, 0.92F);
+        }
         for (int i = 0; i < faces.length; i++) {
             int[] f = faces[i];
             g.tri(v[f[0]][0], v[f[0]][1], v[f[0]][2],
                   v[f[1]][0], v[f[1]][1], v[f[1]][2],
                   v[f[2]][0], v[f[2]][1], v[f[2]][2], cols[i], sh[i]);
-            // a translucent, larger halo makes the diamond look blurred like image-14
-            g.tri(v[f[0]][0] * 1.16D, v[f[0]][1] * 1.16D, v[f[0]][2],
-                  v[f[1]][0] * 1.16D, v[f[1]][1] * 1.16D, v[f[1]][2],
-                  v[f[2]][0] * 1.16D, v[f[2]][1] * 1.16D, v[f[2]][2], 0xA8CFF6, 0.20F);
         }
     }
 
@@ -641,7 +645,7 @@ public final class ClientPhenomena {
         double base = a.y - height + 0.55D * t;
         g.begin(a.x - cam.x, base - cam.y, a.z - cam.z, 0.0D, 1.0D, 1.0D, 1.0F);
         g.box(-half, 0, -half, half, height, half, 0x1A1C22, true);
-        g.box(-18, 30, -18, 18, 32, 18, 0xEEF3FA, true);
+        g.box(-14, 30, -14, 14, 31, 14, 0xF6F9FF, true);
         Random r = new Random(a.seed);
         for (int i = 0; i < 44; i++) {
             double u = (r.nextDouble() * 2.0D - 1.0D) * (half - 0.6D);
