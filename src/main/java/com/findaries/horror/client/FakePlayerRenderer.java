@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 /** Uses the real skin of the player it copies (Steve / the player's own skin when alone). */
 public class FakePlayerRenderer extends MobRenderer<FakePlayerEntity, TallHumanModel<FakePlayerEntity>> {
     public FakePlayerRenderer(EntityRendererProvider.Context context) {
-        super(context, new TallHumanModel<>(context.bakeLayer(TallHumanModel.LAYER), TallHumanModel.Shape.SKY_PERSON), 0.5F);
+        super(context, new TallHumanModel<>(context.bakeLayer(TallHumanModel.LAYER), TallHumanModel.Shape.PLAYER), 0.5F);
     }
 
     @Override
