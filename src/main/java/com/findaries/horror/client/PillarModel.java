@@ -14,7 +14,8 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.util.Mth;
 
-/** image-5: a black three-block column with small yellow dots, two eyes and a belly portal. */
+/** Original prompt: 3 blocks tall, 1 block wide, two eyes, belly opens into a Hellway portal.
+ *  image-5: the column itself is BLACK. */
 public class PillarModel extends EntityModel<PillarEntity> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(FinDaries.rl("pillar"), "main");
 
@@ -23,7 +24,6 @@ public class PillarModel extends EntityModel<PillarEntity> {
     private final ModelPart bellyLeft;
     private final ModelPart bellyRight;
     private final ModelPart inside;
-    private final ModelPart dots;
 
     public PillarModel(ModelPart root) {
         this.body = root.getChild("body");
@@ -31,7 +31,6 @@ public class PillarModel extends EntityModel<PillarEntity> {
         this.bellyLeft = root.getChild("belly_left");
         this.bellyRight = root.getChild("belly_right");
         this.inside = root.getChild("inside");
-        this.dots = root.getChild("dots");
     }
 
     public static LayerDefinition createLayer() {
@@ -49,12 +48,6 @@ public class PillarModel extends EntityModel<PillarEntity> {
                 .addBox(0.0F, -24.0F, -9.0F, 8.0F, 14.0F, 1.0F), base);
         root.addOrReplaceChild("inside", CubeListBuilder.create().texOffs(16, 48)
                 .addBox(-7.0F, -24.0F, -8.5F, 14.0F, 14.0F, 0.5F), base);
-        // the little yellow dashes running down the front of image-5
-        root.addOrReplaceChild("dots", CubeListBuilder.create().texOffs(24, 48)
-                .addBox(-4.0F, -40.0F, -8.2F, 1.0F, 1.0F, 0.2F)
-                .addBox(3.0F, -34.0F, -8.2F, 1.0F, 1.0F, 0.2F)
-                .addBox(-2.0F, -29.0F, -8.2F, 1.0F, 1.0F, 0.2F)
-                .addBox(4.0F, -12.0F, -8.2F, 1.0F, 1.0F, 0.2F), base);
         return LayerDefinition.create(mesh, 64, 64);
     }
 
@@ -75,6 +68,5 @@ public class PillarModel extends EntityModel<PillarEntity> {
         this.bellyLeft.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.bellyRight.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.inside.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-        this.dots.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }

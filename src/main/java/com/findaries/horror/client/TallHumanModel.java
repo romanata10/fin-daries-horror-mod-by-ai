@@ -16,7 +16,8 @@ import net.minecraft.world.entity.Mob;
 
 /**
  * A player-skin shaped body whose parts are stretched per entity.
- * LONGLEGS is plain Steve with only the legs stretched (image-10); every other
+ * LONGLEGS is the vanilla Steve mesh with every part stretched uniformly to the
+ * 5 block hitbox from the original prompt (image-10, "Стив без лица"); every other
  * shape follows its own reference photo.
  */
 public class TallHumanModel<T extends Mob> extends EntityModel<T> {
@@ -24,9 +25,9 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
 
     /** All factors are relative to a normal player (legs/arms/body 12 px long, limbs 4 px thick). */
     public record Shape(float head, float bodyWidth, float bodyHeight, float limbWidth, float armLength, float legLength, float armSpread, boolean horns) {
-        /** image-10 / "Стив без лица": a normal player, only stretched. Head, torso and
-         *  arms keep Steve's 1.0 proportions; only the legs (and a little the body) are longer. */
-        public static final Shape LONGLEGS = new Shape(1.0F, 1.0F, 1.15F, 1.0F, 1.25F, 2.35F, 0.0F, false);
+        /** image-10 / "Стив без лица": EXACT vanilla player proportions (all 1.0).
+         *  The whole mesh is then stretched vertically x2.5 to a 5 block tall Steve. */
+        public static final Shape LONGLEGS = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, false);
         /** image-1: dark thin figure against blue sky, still player-shaped. */
         public static final Shape BLUE_STRANGER = new Shape(0.95F, 0.95F, 1.20F, 0.95F, 1.20F, 2.10F, 0.0F, false);
         /** image-6: blurred grey humanoid, almost normal proportions. */
@@ -91,6 +92,12 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         return this.shape.horns;
     }
 
+    /** Model space: y grows downwards and the feet sit at y = 24. Stretch everything
+     *  relative to the feet so a 2 block Steve becomes the 5 block tall LONGLEGS. */
+    private static float stretchY(float y, float k) {
+        return 24.0F + (y - 24.0F) * k;
+    }
+
     private static void place(ModelPart part, float x, float y, float sx, float sy, float sz) {
         part.x = x;
         part.y = y;
@@ -112,20 +119,22 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         float halfBody = 4.0F * s.bodyWidth;
         float legX = Math.max(1.9F * s.bodyWidth, 2.0F * s.limbWidth + 0.05F);
 
-        place(this.head, 0.0F, bodyTop, s.head, s.head, s.head);
-        place(this.body, 0.0F, bodyTop, s.bodyWidth, s.bodyHeight, s.bodyWidth);
-        place(this.rightArm, -(halfBody + s.limbWidth), bodyTop + 2.0F * s.armLength, s.limbWidth, s.armLength, s.limbWidth);
-        place(this.leftArm, halfBody + s.limbWidth, bodyTop + 2.0F * s.armLength, s.limbWidth, s.armLength, s.limbWidth);
-        place(this.rightLeg, -legX, legTop, s.limbWidth, s.legLength, s.limbWidth);
-        place(this.leftLeg, legX, legTop, s.limbWidth, s.legLength, s.limbWidth);
+        // the faceless Steve is the vanilla player mesh, uniformly stretched to 5 blocks
+        float k = s == Shape.LONGLEGS ? 2.5F : 1.0F;
+        place(this.head, 0.0F, stretchY(bodyTop, k), s.head, s.head * k, s.head);
+        place(this.body, 0.0F, stretchY(bodyTop, k), s.bodyWidth, s.bodyHeight * k, s.bodyWidth);
+        place(this.rightArm, -(halfBody + s.limbWidth), stretchY(bodyTop + 2.0F * s.armLength, k), s.limbWidth, s.armLength * k, s.limbWidth);
+        place(this.leftArm, halfBody + s.limbWidth, stretchY(bodyTop + 2.0F * s.armLength, k), s.limbWidth, s.armLength * k, s.limbWidth);
+        place(this.rightLeg, -legX, stretchY(legTop, k), s.limbWidth, s.legLength * k, s.limbWidth);
+        place(this.leftLeg, legX, stretchY(legTop, k), s.limbWidth, s.legLength * k, s.limbWidth);
 
         this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
         this.head.xRot = headPitch * Mth.DEG_TO_RAD;
-        place(this.jaw, 0.0F, bodyTop, s.head, s.head, s.head);
+        place(this.jaw, 0.0F, stretchY(bodyTop, k), s.head, s.head * k, s.head);
         this.jaw.visible = s.horns;
         this.jaw.yRot = this.head.yRot;
         this.jaw.xRot = this.head.xRot;
-        place(this.horns, 0.0F, bodyTop, s.head, s.head, s.head);
+        place(this.horns, 0.0F, stretchY(bodyTop, k), s.head, s.head * k, s.head);
         this.horns.yRot = this.head.yRot;
         this.horns.xRot = this.head.xRot;
         this.horns.visible = s.horns;
