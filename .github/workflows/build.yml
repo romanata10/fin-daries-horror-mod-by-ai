@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -60,3 +60,25 @@ jobs:
             run/screenshots/*.png
             run/logs/latest.log
             run/crash-reports/*
+      - name: Report
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          SHA="${{ github.sha }}"
+          REPO="${{ github.repository }}"
+          post() { gh api "repos/$REPO/commits/$SHA/comments" -f "body=$1" > /dev/null 2>&1; }
+          for f in build.log server.log client.log; do
+            [ -f "$f" ] || continue
+            post "LOG:$f:$(tail -c 6000 "$f")"
+          done
+          sudo apt-get install -y -qq imagemagick > /dev/null 2>&1
+          mkdir -p /tmp/thumbs
+          for png in run/screenshots/*.png; do
+            [ -f "$png" ] || continue
+            n=$(basename "$png" .png)
+            convert "$png" -resize 560x315 -quality 62 "/tmp/thumbs/$n.jpg" 2>/dev/null || continue
+            post "SHOT:$n:$(base64 -w0 "/tmp/thumbs/$n.jpg")"
+          done
+          exit 0

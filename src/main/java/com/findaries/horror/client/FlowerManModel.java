@@ -25,11 +25,13 @@ public class FlowerManModel extends EntityModel<FlowerManEntity> {
     private final ModelPart column;
     private final ModelPart rightLeg;
     private final ModelPart leftLeg;
+    private final ModelPart roots;
 
     public FlowerManModel(ModelPart root) {
         this.column = root.getChild("column");
         this.rightLeg = root.getChild("right_leg");
         this.leftLeg = root.getChild("left_leg");
+        this.roots = root.getChild("roots");
     }
 
     public static LayerDefinition createLayer() {
@@ -54,8 +56,14 @@ public class FlowerManModel extends EntityModel<FlowerManEntity> {
         column.addOrReplaceChild("petal_d",
                 CubeListBuilder.create().texOffs(16, 32).addBox(-7.0F, -18.0F, 0.0F, 14.0F, 7.0F, 0.0F),
                 PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, -0.7853982F, 0.0F));
+        for (int i = 0; i < 4; i++) {
+            float a = new float[]{0.3926991F, 1.1780972F, -0.3926991F, -1.1780972F}[i];
+            column.addOrReplaceChild("petal_extra_" + i,
+                    CubeListBuilder.create().texOffs(16, 32).addBox(-7.0F, -18.0F, 0.0F, 14.0F, 7.0F, 0.0F),
+                    PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, a, 0.0F));
+        }
         column.addOrReplaceChild("core",
-                CubeListBuilder.create().texOffs(48, 32).addBox(-2.0F, -16.0F, -2.0F, 4.0F, 4.0F, 4.0F),
+                CubeListBuilder.create().texOffs(48, 32).addBox(-4.0F, -19.0F, -4.0F, 8.0F, 8.0F, 8.0F),
                 PartPose.offset(0.0F, -32.0F, 0.0F));
         root.addOrReplaceChild("right_leg",
                 CubeListBuilder.create().texOffs(0, 64).addBox(-1.5F, 0.0F, -1.5F, 3.0F, LEGS, 3.0F),
@@ -63,6 +71,10 @@ public class FlowerManModel extends EntityModel<FlowerManEntity> {
         root.addOrReplaceChild("left_leg",
                 CubeListBuilder.create().texOffs(0, 64).addBox(-1.5F, 0.0F, -1.5F, 3.0F, LEGS, 3.0F),
                 PartPose.offset(4.0F, top, 0.0F));
+        root.addOrReplaceChild("roots", CubeListBuilder.create().texOffs(0, 64)
+                .addBox(-6.0F, 28.0F, -3.0F, 4.0F, 2.0F, 6.0F)
+                .addBox(2.0F, 28.0F, -3.0F, 4.0F, 2.0F, 6.0F),
+                PartPose.offset(0.0F, -6.0F, 0.0F));
         return LayerDefinition.create(mesh, 128, 128);
     }
 
@@ -80,5 +92,6 @@ public class FlowerManModel extends EntityModel<FlowerManEntity> {
         this.column.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.rightLeg.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         this.leftLeg.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+        this.roots.render(poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }

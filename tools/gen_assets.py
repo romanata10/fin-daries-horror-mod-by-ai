@@ -1222,3 +1222,641 @@ for _key, (_style, _sky, _fog, _grass, _foliage, _time, _amb) in V5_DIMS.items()
         'spawn_costs': {}, 'carvers': {}, 'features': []})
 
 print('0.5.0 assets rebuilt from the 22 reference photos')
+
+# =====================================================================================================
+# 0.6.0 — THIRD, FULL REBUILD.  Cool detailed pixel-art made from the reference photos.
+# - NO vanilla overrides: the original Minecraft textures are restored.
+# - dimensions / biomes / CI scripts are NOT touched by this section.
+# - every mod texture, block model and entity skin below is rewritten again from scratch.
+# =====================================================================================================
+import shutil  # noqa: E402
+
+R6 = random.Random(6011)
+V6_ENT = TEX_ENTITY
+V6_ITEM = V5_ITEM
+V6_BLK = TEX_BLOCK
+V6_ROOT = ROOT
+
+# 1) give Minecraft its own textures back
+shutil.rmtree(os.path.join(V5_RES, 'assets', 'minecraft'), ignore_errors=True)
+print('0.6.0: original Minecraft block textures restored (overrides removed)')
+
+
+def v6_c(c, a=255):
+    return (c[0], c[1], c[2], a)
+
+
+def v6_mix(a, b, t):
+    return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
+
+
+def v6_jit(c, j):
+    return tuple(max(0, min(255, ch + R6.randint(-j, j))) for ch in c[:3])
+
+
+def v6_put(im, x, y, c, a=255):
+    if 0 <= x < im.width and 0 <= y < im.height:
+        im.putpixel((x, y), v6_c(c, a))
+
+
+def v6_face(im, box, base, *, grain=9, light=0.24, rim=None, crack=False, streak=None):
+    """One cube face: vertical shade + clustered pixel grain + bevel + optional cracks."""
+    x0, y0, x1, y1 = box
+    dark = tuple(int(ch * (1 - light)) for ch in base)
+    lightc = tuple(min(255, int(ch * (1 + light))) for ch in base)
+    # clustered noise: a few dark / light patches
+    patches = [(R6.randrange(x0, x1), R6.randrange(y0, y1), R6.randint(2, 6),
+                R6.choice((-1, 1))) for _ in range(max(2, (x1 - x0) // 3))]
+    for y in range(y0, y1):
+        v = (y - y0) / max(1, (y1 - y0 - 1))
+        for x in range(x0, x1):
+            col = v6_mix(lightc, dark, v)
+            col = v6_jit(col, grain)
+            for px, py, pr, sign in patches:
+                d2 = (x - px) ** 2 + (y - py) ** 2
+                if d2 < pr * pr:
+                    col = v6_mix(col, lightc if sign > 0 else dark, 0.45 * (1 - d2 / (pr * pr)))
+            v6_put(im, x, y, col)
+    # bevel: bright top/left, deep bottom/right
+    edge = rim if rim else tuple(min(255, int(ch * 1.55)) for ch in base)
+    shade = tuple(int(ch * 0.42) for ch in base)
+    for x in range(x0, x1):
+        v6_put(im, x, y0, edge)
+        v6_put(im, x, y0 + 1, v6_mix(base, edge, 0.4))
+        v6_put(im, x, y1 - 1, shade)
+    for y in range(y0, y1):
+        v6_put(im, x0, y, edge)
+        v6_put(im, x1 - 1, y, shade)
+    if crack:
+        cx, cy = R6.randrange(x0 + 1, x1 - 1), y0
+        for _ in range(y1 - y0 - 1):
+            cx = max(x0, min(x1 - 1, cx + R6.choice((-1, 0, 0, 1))))
+            cy += 1
+            v6_put(im, cx, cy, tuple(int(ch * 0.28) for ch in base))
+    if streak:
+        for _ in range(streak):
+            sx = R6.randrange(x0 + 1, x1 - 1)
+            sy = R6.randrange(y0 + 1, y1 - 3)
+            ln = R6.randint(2, max(3, (y1 - y0) // 4))
+            for k in range(ln):
+                v6_put(im, sx, sy + k, v6_mix(base, (235, 235, 245), 0.6))
+
+
+def v6_glow(im, cx, cy, colour, radius=3):
+    """A bright core with a soft pixel halo."""
+    for dy in range(-radius, radius + 1):
+        for dx in range(-radius, radius + 1):
+            d = (dx * dx + dy * dy) ** 0.5
+            if d > radius:
+                continue
+            t = 1.0 - d / radius
+            col = v6_mix((10, 10, 14), colour, min(1.0, t * 1.8))
+            v6_put(im, cx + dx, cy + dy, col)
+
+
+def v6_lines(im, box, colour, n=6, vertical=True):
+    x0, y0, x1, y1 = box
+    for _ in range(n):
+        if vertical:
+            x = R6.randrange(x0 + 1, x1 - 1)
+            y = R6.randrange(y0, y1 - 3)
+            for k in range(R6.randint(2, (y1 - y0) // 3)):
+                v6_put(im, x, y + k, colour)
+        else:
+            y = R6.randrange(y0 + 1, y1 - 1)
+            x = R6.randrange(x0, x1 - 3)
+            for k in range(R6.randint(2, (x1 - x0) // 3)):
+                v6_put(im, x + k, y, colour)
+
+
+# ---- Minecraft humanoid UV map, 64x64 ---------------------------------------------------------
+V6_FACES = {
+    'head': [(8, 8, 16, 16, 'front'), (24, 8, 32, 16, 'back'), (8, 0, 16, 8, 'top'),
+             (16, 0, 24, 8, 'bottom'), (0, 8, 8, 16, 'side'), (16, 8, 24, 16, 'side')],
+    'body': [(20, 20, 28, 32, 'front'), (32, 20, 40, 32, 'back'), (20, 16, 28, 20, 'top'),
+             (28, 16, 36, 20, 'bottom'), (16, 20, 20, 32, 'side'), (28, 20, 32, 32, 'side')],
+    'rarm': [(44, 20, 48, 32, 'front'), (48, 20, 52, 32, 'back'), (44, 16, 48, 20, 'top'),
+             (48, 16, 52, 20, 'bottom'), (40, 20, 44, 32, 'side'), (52, 20, 56, 32, 'side')],
+    'larm': [(36, 52, 40, 64, 'front'), (40, 52, 44, 64, 'back'), (36, 48, 40, 52, 'top'),
+             (40, 48, 44, 52, 'bottom'), (32, 52, 36, 64, 'side'), (44, 52, 48, 64, 'side')],
+    'rleg': [(4, 20, 8, 32, 'front'), (12, 20, 16, 32, 'back'), (4, 16, 8, 20, 'top'),
+             (8, 16, 12, 20, 'bottom'), (0, 20, 4, 32, 'side'), (8, 20, 12, 32, 'side')],
+    'lleg': [(20, 52, 24, 64, 'front'), (28, 52, 32, 64, 'back'), (20, 48, 24, 52, 'top'),
+             (24, 48, 28, 52, 'bottom'), (16, 52, 20, 64, 'side'), (24, 52, 28, 64, 'side')],
+}
+
+
+def v6_skin(name, cfg):
+    """cfg: base, rim, accent, eye, face, chest, horns, veins, stars, blue_outline, blank"""
+    im = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
+    base, rim = cfg['base'], cfg.get('rim', tuple(min(255, int(c * 1.7)) for c in cfg['base']))
+    accent = cfg.get('accent', (220, 220, 230))
+    eye = cfg.get('eye', (250, 240, 210))
+    for zone, faces in V6_FACES.items():
+        b = tuple(int(c * (0.82 if zone.endswith('leg') else 1.0)) for c in base)
+        for (x0, y0, x1, y1, kind) in faces:
+            v6_face(im, (x0, y0, x1, y1), b, grain=cfg.get('grain', 8),
+                    light=0.3 if kind == 'top' else 0.16, rim=rim,
+                    crack=cfg.get('cracks', False) and kind == 'front',
+                    streak=cfg.get('streak', 0) if kind == 'front' else 0)
+    d = ImageDraw.Draw(im)
+
+    # face on the front of the head
+    hf = (8, 8, 16, 16)
+    face = cfg.get('face', 'blank')
+    if face == 'demon':
+        for ex in (10, 13):
+            v6_glow(im, ex, 11, eye, 2)
+            v6_put(im, ex, 11, (255, 255, 245))
+        d.line([(9, 14), (14, 14)], fill=v6_c(tuple(int(c * 0.35) for c in base)))
+        d.line([(10, 15), (13, 15)], fill=v6_c(accent))
+        # horn tips on the top face
+        d.polygon([(9, 0), (10, 5), (11, 0)], fill=v6_c(rim))
+        d.polygon([(13, 0), (14, 5), (15, 0)], fill=v6_c(rim))
+    elif face == 'giant':
+        for ex in (10, 13):
+            v6_glow(im, ex, 11, (250, 220, 70), 2)
+            v6_put(im, ex, 11, (255, 248, 190))
+        d.line([(9, 14), (14, 14)], fill=v6_c((220, 220, 220)))
+        for i in range(5):
+            v6_put(im, 9 + i, 15, (235, 235, 235))
+    elif face == 'skull':
+        for ex in (10, 13):
+            v6_glow(im, ex, 11, eye, 2)
+            v6_put(im, ex, 11, (250, 250, 245))
+        d.line([(10, 14), (13, 14)], fill=v6_c((220, 220, 220)))
+        d.line([(9, 9), (14, 9)], fill=v6_c(rim))
+    elif face == 'dots':
+        for (px, py) in ((9, 10), (11, 9), (13, 10), (10, 12), (12, 12), (14, 12)):
+            v6_glow(im, px, py, (235, 240, 255), 1)
+    elif face == 'steve':
+        for ex in (10, 13):
+            d.rectangle([ex - 1, 11, ex, 12], fill=v6_c((245, 240, 235)))
+            d.point([(ex, 12)], fill=v6_c((60, 90, 180)))
+        d.line([(10, 14), (13, 14)], fill=v6_c((140, 82, 58)))
+        d.rectangle([8, 8, 15, 10], fill=v6_c((58, 36, 20)))
+    elif face == 'pillar':
+        for ex in (10, 13):
+            v6_glow(im, ex, 11, (248, 246, 232), 1)
+        d.rectangle([10, 13, 13, 15], fill=v6_c((238, 104, 24)))
+
+    # chest symbols
+    ch = cfg.get('chest', 'none')
+    bf = (20, 20, 28, 32)
+    if ch == 'traffic':
+        d.rectangle([21, 21, 26, 30], fill=v6_c((70, 72, 76)))
+        d.rectangle([22, 22, 25, 25], fill=v6_c((230, 44, 38)))
+        d.rectangle([22, 26, 25, 29], fill=v6_c((58, 220, 70)))
+        d.rectangle([21, 21, 26, 30], outline=v6_c((140, 144, 150)))
+    elif ch == 'portal':
+        d.rectangle([21, 22, 26, 30], fill=v6_c(tuple(int(c * 0.3) for c in base)))
+        d.rectangle([21, 22, 26, 30], outline=v6_c(accent))
+        for yy in (24, 27):
+            d.line([(22, yy), (25, yy)], fill=v6_c((235, 120, 40)))
+    elif ch == 'ribs':
+        for yy in (22, 25, 28):
+            d.line([(21, yy), (26, yy)], fill=v6_c(accent))
+    elif ch == 'eye':
+        d.ellipse([21, 23, 26, 28], fill=v6_c((240, 238, 228)))
+        d.ellipse([23, 25, 24, 26], fill=v6_c((110, 20, 26)))
+
+    if cfg.get('veins'):
+        for zone in ('body', 'rleg', 'lleg', 'rarm', 'larm'):
+            (x0, y0, x1, y1, _) = V6_FACES[zone][0]
+            xx = R6.randrange(x0 + 1, x1 - 1)
+            for yy in range(y0 + 1, y1 - 1):
+                xx = max(x0, min(x1 - 1, xx + R6.choice((-1, 0, 1))))
+                v6_put(im, xx, yy, accent)
+    if cfg.get('stars'):
+        for _ in range(26):
+            v6_put(im, R6.randrange(16, 40), R6.randrange(16, 64),
+                   v6_mix(base, (235, 240, 255), R6.random() * 0.8 + 0.2))
+    if cfg.get('blue_outline'):
+        blue = (34, 48, 190)
+        for zone in ('head', 'body', 'rleg', 'lleg', 'rarm', 'larm'):
+            for (x0, y0, x1, y1, _) in V6_FACES[zone]:
+                d.rectangle([x0, y0, x1 - 1, y1 - 1], outline=v6_c(blue))
+    # specular dots along every cube edge
+    for zone, faces in V6_FACES.items():
+        for (x0, y0, x1, y1, _) in faces:
+            for k in range(0, x1 - x0, 3):
+                v6_put(im, x0 + k, y0, v6_mix(rim, (255, 255, 255), 0.5))
+    im.save(os.path.join(V6_ENT, name + '.png'))
+
+
+V6_SKINS = {
+    # image-12: very thin horned red demon, glowing eyes, ribs, long thin legs
+    'red_demon': dict(base=(54, 8, 9), rim=(168, 38, 30), accent=(230, 60, 40),
+                      eye=(255, 232, 190), face='demon', chest='ribs', veins=True, grain=12),
+    'cave_demon': dict(base=(42, 9, 12), rim=(140, 34, 32), accent=(205, 48, 42),
+                       eye=(255, 226, 180), face='demon', chest='ribs', veins=True, grain=12),
+    # image-19: black rectangle, two yellow eyes, wide jaw
+    'one_eye_giant': dict(base=(9, 9, 12), rim=(42, 44, 50), accent=(250, 216, 84),
+                          eye=(255, 226, 90), face='giant', chest='none', grain=5),
+    # image-22: tall thin navy figure, cube head with two white eyes
+    'nevelim': dict(base=(16, 17, 38), rim=(52, 56, 104), accent=(150, 160, 220),
+                    eye=(240, 242, 255), face='skull', chest='none', stars=True, grain=7),
+    # image-20: black monolith with a thin blue outline and dotted head
+    'eye': dict(base=(4, 4, 9), rim=(26, 30, 62), accent=(40, 60, 210),
+                face='dots', chest='eye', blue_outline=True, grain=3),
+    'she': dict(base=(10, 7, 20), rim=(66, 36, 96), accent=(150, 90, 220),
+                face='skull', chest='none', stars=True, grain=9),
+    'watcher': dict(base=(9, 11, 20), rim=(38, 48, 78), accent=(90, 110, 170),
+                    face='skull', streak=3, grain=9),
+    'wanderer': dict(base=(11, 12, 24), rim=(44, 52, 92), accent=(100, 120, 180),
+                     face='skull', streak=4, cracks=True, grain=9),
+    'longlegs': dict(base=(8, 9, 17), rim=(34, 40, 66), accent=(80, 96, 140),
+                     face='blank', streak=3, grain=8),
+    'blue_stranger': dict(base=(18, 42, 104), rim=(70, 120, 205), accent=(130, 180, 245),
+                          face='blank', streak=4, grain=10),
+    'danger_12': dict(base=(20, 12, 34), rim=(88, 52, 130), accent=(170, 110, 220),
+                      face='skull', veins=True, grain=10),
+    # image-13: Steve with a face and a traffic light on the chest
+    'sky_person': dict(base=(104, 106, 110), rim=(164, 166, 170), accent=(230, 200, 60),
+                       face='steve', chest='traffic', grain=6),
+    # image-10 + "Стив без лица": purple rim, no face
+    'fake_player': dict(base=(150, 110, 82), rim=(178, 134, 100), accent=(90, 130, 80),
+                        face='blank', chest='none', grain=7),
+    # 3-block pillar: warm oak, two pale eyes, orange portal mouth
+    'pillar': dict(base=(126, 84, 44), rim=(190, 142, 78), accent=(250, 126, 32),
+                   face='pillar', chest='portal', cracks=True, grain=11),
+}
+for _n, _cfg in V6_SKINS.items():
+    v6_skin(_n, _cfg)
+# the faceless Steve from the user's own photo is kept as the reference skin
+try:
+    Image.open('/tmp/arena-coding-uploads/Стив без лица.png').convert('RGBA').save(
+        os.path.join(V6_ENT, 'kill000145236.png'))
+except OSError:
+    pass
+
+
+# ---- Flower Man, 128x128: detailed earth, grass, sunflower head, green legs -----------------
+def v6_flower():
+    im = Image.new('RGBA', (128, 128), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    # earth column with real clods, roots and grass fringe
+    v6_face(im, (0, 0, 64, 48), (112, 76, 48), grain=22, light=0.34,
+            rim=(150, 108, 66), crack=True)
+    for _ in range(70):
+        px, py = R6.randrange(64), R6.randrange(6, 46)
+        rad = R6.randint(1, 3)
+        col = v6_jit((96, 62, 38), 16)
+        d.ellipse([px - rad, py - rad, px + rad, py + rad], fill=v6_c(col))
+    for _ in range(16):
+        x = R6.randrange(64)
+        d.line([(x, 8), (x + R6.randint(-3, 3), 8 + R6.randint(6, 20))],
+               fill=v6_c((74, 132, 48)), width=1)
+    # sunflower: 8 golden petals around a dark centre, on a green neck
+    v6_face(im, (16, 32, 44, 40), (250, 206, 32), grain=12, light=0.18, rim=(255, 236, 120))
+    for xx in range(17, 44, 3):
+        d.line([(xx, 32), (xx, 40)], fill=v6_c((226, 168, 20)), width=1)
+    d.ellipse([48, 32, 64, 40], fill=v6_c((58, 36, 18)))
+    d.ellipse([52, 34, 60, 38], fill=v6_c((96, 62, 24)))
+    for _ in range(14):
+        v6_put(im, R6.randrange(50, 63), R6.randrange(33, 39), (150, 100, 38))
+    v6_face(im, (64, 32, 72, 40), (56, 128, 44), grain=8, light=0.2, rim=(96, 176, 64))
+    # two long green legs with vein lines
+    v6_face(im, (0, 64, 12, 128), (64, 140, 48), grain=14, light=0.2, rim=(112, 190, 70))
+    d.line([(5, 64), (5, 128)], fill=v6_c((36, 92, 30)), width=1)
+    for yy in range(68, 128, 7):
+        d.line([(1, yy), (10, yy + 2)], fill=v6_c((90, 168, 58)), width=1)
+    im.save(os.path.join(V6_ENT, 'flower_man.png'))
+v6_flower()
+
+
+# ---- every mod block: 32x32 detailed pixel art, three faces, animated ----------------------
+V6_BNAME = ['wonderland_portal', 'hall_portal', 'dots_portal', 'white_portal',
+            'hellway_portal', 'door_portal', 'freedom_portal', 'wonderdream_portal',
+            'red_cobblestone', 'blood_cobblestone']
+
+
+def v6_tex(name, painter, frames=1, frametime=3, size=32):
+    im = Image.new('RGBA', (size, size * frames), (0, 0, 0, 0))
+    for f in range(frames):
+        for y in range(size):
+            for x in range(size):
+                im.putpixel((x, f * size + y), painter(f, x, y, size))
+    im.save(os.path.join(V6_BLK, name + '.png'))
+    if frames > 1:
+        with open(os.path.join(V6_BLK, name + '.png.mcmeta'), 'w') as fh:
+            json.dump({'animation': {'frametime': frametime, 'interpolate': False}}, fh, indent=2)
+            fh.write('\n')
+
+
+def v6_static(f, x, y, s):
+    v = R6.choice((8, 26, 58, 96, 138, 182, 222, 246))
+    if (y + f * 4) % 32 in (13, 14):
+        v = min(255, v + 46)
+    if (x * 3 + y * 5 + f * 7) % 29 == 0:
+        return (v, int(v * 0.5), int(v * 0.8), 255)
+    return (v, v, v, 255)
+
+
+def v6_wood(f, x, y, s, warm=1.0):
+    row = y % 8
+    if row == 0:
+        return (int(96 * warm), int(58 * warm), 26, 255)
+    grain = int(18 * np.sin(x * 0.55 + y * 0.22 + f * 0.6)) + R6.randint(-9, 9)
+    r = max(0, min(255, int(186 * warm) + grain))
+    g = max(0, min(255, int(124 * warm) + grain))
+    b = max(0, min(255, int(52 * warm) + grain // 2))
+    if (x + y * 3) % 23 == 0:
+        return (int(r * 0.7), int(g * 0.7), int(b * 0.7), 255)
+    return (r, g, b, 255)
+
+
+def v6_neon(f, x, y, s):
+    if 3 <= x <= 28 and 3 <= y <= 28:
+        c = (10, 11, 18, 255)
+        if (x * 5 + y * 7 + f * 3) % 17 == 0:
+            c = (56, 255, 96, 255)
+        elif (x * 3 + y * 11 + f * 5) % 23 == 0:
+            c = (255, 128, 38, 255)
+        elif (x + y * 2) % 13 == 0:
+            c = (54, 130, 255, 255)
+        return c
+    return (34, 36, 48, 255)
+
+
+def v6_white(f, x, y, s):
+    cx = cy = s / 2
+    d = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5
+    v = int(max(150, 255 - d * 5 + 18 * np.sin(d * 0.7 - f)))
+    return (min(255, v), min(255, v), 255, 255)
+
+
+def v6_lava(f, x, y, s):
+    v = 90 + int(52 * np.sin(x * 0.32 + f * 0.8) * np.cos(y * 0.28 - f * 0.5)) + R6.randint(-14, 14)
+    return (min(255, v + 90), max(0, int(v * 0.28)), max(0, int(v * 0.12)), 255)
+
+
+def v6_door(f, x, y, s):
+    if x < 3 or x > 28 or y < 2 or y > 29:
+        return (74, 46, 22, 255)
+    if 6 <= x <= 25 and 6 <= y <= 20:
+        return (108, 164, 210, 255) if 8 <= x <= 23 and 8 <= y <= 18 else (46, 30, 16, 255)
+    if 23 <= x <= 26 and y in (22, 23):
+        return (236, 202, 84, 255)
+    return v6_wood(f, x, y, s, 0.92)
+
+
+def v6_freedom(f, x, y, s):
+    edge = min(x, y, 31 - x, 31 - y)
+    if edge < 3:
+        return (152, 104, 52, 255)
+    if edge < 5:
+        return (220, 176, 104, 255)
+    v = 226 + int(24 * np.sin((x + y) * 0.25 + f * 0.4)) + R6.randint(-8, 8)
+    return (min(255, v), min(255, v), min(255, v - 12), 255)
+
+
+def v6_wd(f, x, y, s):
+    r, g, b, a = v6_wood(f, x, y, s, 1.12)
+    glow = max(0, 40 - abs(x - 16) - abs(y - 16))
+    return (min(255, r + glow), min(255, g + glow // 2), b, a)
+
+
+def v6_stone(f, x, y, s, red=False):
+    base = (132, 58, 50) if red else (96, 22, 24)
+    if (x // 8 + y // 8) % 2 == 0:
+        base = tuple(int(c * 1.14) for c in base)
+    j = R6.randint(-16, 16)
+    if (x + y * 3) % 11 == 0:
+        j -= 34
+    return tuple(max(0, min(255, c + j)) for c in base) + (255,)
+
+
+V6_BLOCK_PAINTERS = {
+    'wonderland_portal': (v6_static, 8, 2),
+    'hall_portal': (lambda f, x, y, s: v6_wood(f, x, y, s, 0.72), 8, 3),
+    'dots_portal': (v6_neon, 8, 2),
+    'white_portal': (v6_white, 6, 3),
+    'hellway_portal': (v6_lava, 8, 2),
+    'door_portal': (v6_door, 1, 3),
+    'freedom_portal': (v6_freedom, 6, 3),
+    'wonderdream_portal': (v6_wd, 6, 3),
+    'red_cobblestone': (lambda f, x, y, s: v6_stone(f, x, y, s, True), 1, 3),
+    'blood_cobblestone': (lambda f, x, y, s: v6_stone(f, x, y, s, False), 1, 3),
+}
+for _b, (_fn, _fr, _ft) in V6_BLOCK_PAINTERS.items():
+    v6_tex(_b, _fn, _fr, _ft)
+    # top / bottom faces are distinct, darker, with a border
+    def _cap(f, x, y, s, _fn=_fn, _b=_b):
+        c = _fn(f, x, y, s)
+        k = 0.62 if min(x, y, s - 1 - x, s - 1 - y) > 2 else 0.42
+        return (int(c[0] * k), int(c[1] * k), int(c[2] * k), 255)
+    v6_tex(_b + '_top', _cap, 1)
+    v6_tex(_b + '_bottom', _cap, 1)
+
+
+def v6_eye_flower(f, x, y, s, top):
+    if not top:
+        return (52, 116, 38, 255) if (x + y) % 5 else (36, 92, 28, 255)
+    cx = cy = 16
+    d = ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5
+    if d < 4:
+        return (18, 18, 22, 255)
+    if d < 11:
+        return (244, 242, 232, 255) if (x + y) % 7 else (222, 220, 214, 255)
+    if d < 14:
+        return (182, 34, 42, 255)
+    return (64, 132, 44, 255) if d < 16 else (0, 0, 0, 0)
+v6_tex('eye_flower_top', lambda f, x, y, s: v6_eye_flower(f, x, y, s, True), 1)
+v6_tex('eye_flower_bottom', lambda f, x, y, s: v6_eye_flower(f, x, y, s, False), 1)
+
+
+# ---- blockstates / block models / item models: brand new -----------------------------------
+for _b in V6_BNAME:
+    v5_json(os.path.join(V6_ROOT, 'blockstates', _b + '.json'),
+            {'variants': {'': {'model': 'findaries:block/' + _b}}})
+    v5_json(os.path.join(V6_ROOT, 'models', 'block', _b + '.json'), {
+        'parent': 'minecraft:block/cube_bottom_top',
+        'textures': {'side': 'findaries:block/' + _b,
+                     'top': 'findaries:block/' + _b + '_top',
+                     'bottom': 'findaries:block/' + _b + '_bottom',
+                     'particle': 'findaries:block/' + _b},
+        'render_type': 'minecraft:translucent' if 'portal' in _b else 'minecraft:solid'})
+    v5_json(os.path.join(V6_ROOT, 'models', 'item', _b + '.json'),
+            {'parent': 'findaries:block/' + _b})
+v5_json(os.path.join(V6_ROOT, 'blockstates', 'eye_flower.json'), {'variants': {
+    'half=lower': {'model': 'findaries:block/eye_flower_bottom'},
+    'half=upper': {'model': 'findaries:block/eye_flower_top'}}})
+for _h in ('top', 'bottom'):
+    v5_json(os.path.join(V6_ROOT, 'models', 'block', 'eye_flower_' + _h + '.json'), {
+        'parent': 'minecraft:block/cross',
+        'textures': {'cross': 'findaries:block/eye_flower_' + _h},
+        'render_type': 'minecraft:cutout'})
+v5_json(os.path.join(V6_ROOT, 'models', 'item', 'eye_flower.json'),
+        {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'findaries:item/eye_flower'}})
+for _e in V5_EGGS:
+    v5_json(os.path.join(V6_ROOT, 'models', 'item', _e + '_spawn_egg.json'),
+            {'parent': 'minecraft:item/template_spawn_egg'})
+for _n in V5_ICONS:
+    v5_json(os.path.join(V6_ROOT, 'models', 'item', _n + '.json'),
+            {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'findaries:item/' + _n}})
+
+
+# ---- event icons: dark plate, bevel, glow, recognisable shape -------------------------------
+def v6_icon(name, painter):
+    im = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle([0, 0, 15, 15], radius=2, fill=(34, 38, 52, 240),
+                        outline=(104, 114, 138, 255))
+    d.line([(1, 1), (14, 1)], fill=(168, 178, 202, 255))
+    d.line([(1, 14), (14, 14)], fill=(18, 20, 28, 255))
+    painter(d, im)
+    im.save(os.path.join(V6_ITEM, name + '.png'))
+
+
+def v6_i_cone(d, im):
+    d.polygon([(1, 3), (14, 3), (8, 15)], fill=(4, 5, 9, 255))
+    d.line([(1, 3), (14, 3), (8, 15), (1, 3)], fill=(126, 138, 168, 255))
+def v6_i_eyes(d, im):
+    v6_i_cone(d, im)
+    for ex in (5, 10):
+        v6_glow(im, ex, 6, (250, 248, 232), 1)
+def v6_i_lying(d, im):
+    d.polygon([(1, 4), (1, 9), (14, 12)], fill=(4, 5, 9, 255))
+    d.line([(1, 4), (14, 11), (14, 12), (1, 9), (1, 4)], fill=(126, 138, 168, 255))
+def v6_i_star(d, im):
+    d.polygon([(8, 1), (14, 8), (8, 15), (2, 8)], fill=(86, 156, 236, 255))
+    d.polygon([(8, 3), (12, 8), (8, 12), (4, 8)], fill=(168, 214, 255, 255))
+    d.line([(8, 1), (8, 15)], fill=(216, 236, 255, 255))
+def v6_i_slab(d, im):
+    d.polygon([(1, 6), (4, 3), (15, 6), (12, 10)], fill=(6, 7, 12, 255))
+    for x, c in ((4, (56, 255, 96)), (8, (255, 128, 38)), (12, (56, 255, 96))):
+        v6_glow(im, x, 6, c, 1)
+def v6_i_tower(d, im):
+    d.rectangle([6, 1, 10, 15], fill=(20, 22, 28, 255))
+    d.rectangle([6, 1, 10, 15], outline=(72, 78, 94, 255))
+    for y in (3, 6, 9, 12):
+        d.line([(7, y), (9, y)], fill=(250, 212, 60, 255))
+    for px, py in ((2, 4), (13, 5), (12, 11)):
+        v6_glow(im, px, py, (255, 220, 80), 1)
+    d.line([(3, 8), (13, 8)], fill=(226, 230, 240, 180))
+def v6_i_ufo(d, im):
+    d.polygon([(1, 6), (5, 3), (14, 5), (12, 10), (3, 10)], fill=(26, 32, 42, 255))
+    d.ellipse([3, 6, 7, 9], fill=(246, 224, 66, 255))
+    for _ in range(7):
+        v6_put(im, R6.randrange(2, 15), R6.randrange(2, 12), (200, 208, 220))
+def v6_i_ship(d, im):
+    d.polygon([(2, 8), (8, 2), (14, 8), (8, 11)], fill=(30, 130, 232, 255))
+    d.polygon([(2, 8), (5, 5), (5, 10)], fill=(220, 238, 255, 255))
+    d.polygon([(14, 8), (11, 5), (11, 10)], fill=(220, 238, 255, 255))
+    v6_glow(im, 8, 5, (255, 146, 42), 1)
+def v6_i_mush(d, im):
+    d.ellipse([3, 2, 12, 7], fill=(230, 224, 216, 255))
+    d.ellipse([4, 2, 11, 4], fill=(250, 246, 240, 255))
+    for x in (5, 8, 11):
+        d.line([(x, 7), (x + R6.randint(-2, 2), 15)], fill=(212, 204, 196, 255))
+def v6_i_longlegs(d, im):
+    d.rectangle([7, 2, 9, 9], fill=(6, 8, 14, 255), outline=(110, 122, 152, 255))
+    d.line([(7, 9), (4, 15)], fill=(6, 8, 14, 255), width=2)
+    d.line([(9, 9), (12, 15)], fill=(6, 8, 14, 255), width=2)
+    d.line([(6, 5), (3, 7)], fill=(6, 8, 14, 255))
+def v6_i_blue(d, im):
+    d.rectangle([6, 2, 10, 10], fill=(20, 52, 128, 255))
+    d.line([(6, 10), (4, 15)], fill=(20, 52, 128, 255), width=2)
+    d.line([(10, 10), (12, 15)], fill=(20, 52, 128, 255), width=2)
+    d.line([(6, 3), (10, 3)], fill=(120, 180, 250, 255))
+def v6_i_portal(d, im):
+    d.rectangle([3, 1, 12, 14], fill=(16, 17, 24, 255))
+    for y in (3, 6, 9, 12):
+        d.line([(4, y), (11, y)], fill=(196, 200, 214, 255))
+    d.rectangle([3, 1, 12, 14], outline=(96, 104, 128, 255))
+def v6_i_castle(d, im):
+    d.rectangle([2, 6, 13, 15], fill=(110, 112, 116, 255))
+    for x in (2, 6, 10, 12):
+        d.rectangle([x, 3, x + 2, 6], fill=(110, 112, 116, 255))
+    d.rectangle([7, 10, 9, 15], fill=(30, 30, 34, 255))
+def v6_i_house(d, im):
+    d.polygon([(1, 7), (8, 1), (15, 7)], fill=(176, 108, 48, 255))
+    d.rectangle([3, 7, 13, 15], fill=(202, 142, 60, 255))
+    d.rectangle([7, 10, 9, 15], fill=(68, 42, 22, 255))
+    d.rectangle([4, 9, 6, 11], fill=(120, 178, 220, 255))
+def v6_i_flower(d, im):
+    d.rectangle([5, 6, 11, 13], fill=(112, 76, 48, 255))
+    d.rectangle([5, 5, 11, 7], fill=(74, 142, 48, 255))
+    d.ellipse([4, 0, 12, 6], fill=(250, 208, 34, 255))
+    d.ellipse([6, 2, 10, 4], fill=(58, 36, 18, 255))
+    d.line([(6, 13), (6, 15)], fill=(64, 140, 48, 255), width=2)
+    d.line([(10, 13), (10, 15)], fill=(64, 140, 48, 255), width=2)
+def v6_i_pillar(d, im):
+    d.rectangle([5, 1, 10, 15], fill=(126, 84, 44, 255))
+    d.rectangle([5, 1, 10, 15], outline=(190, 142, 78, 255))
+    for ex in (6, 9):
+        v6_glow(im, ex, 4, (250, 248, 232), 1)
+    d.rectangle([6, 9, 9, 12], fill=(240, 110, 26, 255))
+def v6_i_hole(d, im):
+    d.rectangle([1, 1, 14, 14], fill=(124, 128, 132, 255))
+    d.ellipse([3, 4, 12, 13], fill=(6, 6, 9, 255))
+    d.rectangle([6, 11, 9, 12], fill=(150, 194, 224, 255))
+def v6_i_demon(d, im):
+    d.polygon([(6, 0), (8, 4), (10, 0)], fill=(168, 38, 30, 255))
+    d.rectangle([7, 4, 9, 14], fill=(54, 8, 9, 255))
+    for ex in (7, 9):
+        v6_glow(im, ex, 5, (255, 232, 190), 1)
+    d.line([(7, 4), (7, 15)], fill=(230, 60, 40, 255))
+    d.line([(9, 4), (9, 15)], fill=(230, 60, 40, 255))
+def v6_i_nevelim(d, im):
+    d.rectangle([6, 2, 10, 9], fill=(16, 17, 38, 255), outline=(96, 106, 160, 255))
+    d.line([(6, 9), (5, 15)], fill=(16, 17, 38, 255), width=2)
+    d.line([(10, 9), (11, 15)], fill=(16, 17, 38, 255), width=2)
+    for ex in (7, 9):
+        v6_glow(im, ex, 3, (240, 242, 255), 1)
+def v6_i_eye(d, im):
+    d.rectangle([5, 2, 11, 15], fill=(4, 4, 9, 255), outline=(96, 106, 150, 255))
+    d.rectangle([5, 2, 11, 15], outline=(34, 48, 190, 255))
+    for (px, py) in ((7, 4), (9, 4), (7, 6), (9, 6)):
+        v6_put(im, px, py, (235, 240, 255))
+def v6_i_giant(d, im):
+    d.rectangle([4, 0, 12, 4], fill=(9, 9, 12, 255))
+    d.rectangle([5, 4, 11, 10], fill=(18, 19, 24, 255))
+    d.line([(5, 10), (4, 15)], fill=(18, 19, 24, 255), width=2)
+    d.line([(11, 10), (12, 15)], fill=(18, 19, 24, 255), width=2)
+    for ex in (7, 9):
+        v6_glow(im, ex, 1, (255, 226, 90), 1)
+    d.line([(6, 3), (10, 3)], fill=(240, 240, 240, 255))
+def v6_i_fake(d, im):
+    d.rectangle([4, 2, 11, 10], fill=(150, 110, 82, 255))
+    d.rectangle([4, 2, 11, 4], fill=(58, 36, 20, 255))
+    d.rectangle([4, 10, 11, 15], fill=(60, 110, 70, 255))
+    d.rectangle([4, 2, 11, 10], outline=(186, 120, 190, 255))
+def v6_i_one_eye(d, im):
+    d.rectangle([4, 2, 12, 15], fill=(9, 9, 12, 255), outline=(110, 114, 128, 255))
+    d.rectangle([6, 2, 10, 6], fill=(16, 16, 20, 255))
+    for ex in (7, 9):
+        v6_glow(im, ex, 4, (250, 216, 84), 1)
+    d.line([(7, 9), (9, 9)], fill=(60, 62, 70, 255))
+def v6_i_wanderer(d, im):
+    d.line([(2, 6), (14, 6)], fill=(11, 12, 24, 255), width=2)
+    d.rectangle([7, 4, 9, 15], fill=(11, 12, 24, 255))
+    d.line([(2, 6), (2, 9)], fill=(11, 12, 24, 255))
+def v6_i_hell(d, im):
+    d.rectangle([3, 1, 12, 14], fill=(96, 22, 24, 255))
+    d.rectangle([5, 4, 10, 11], fill=(18, 4, 6, 255))
+    for _ in range(6):
+        v6_put(im, R6.randrange(4, 12), R6.randrange(2, 13), (230, 96, 30))
+v6_icon('eye_flower', lambda d, im: (
+    d.ellipse([3, 3, 12, 12], fill=(244, 242, 232, 255)),
+    d.ellipse([6, 6, 9, 9], fill=(120, 20, 30, 255)),
+    d.line([(7, 12), (7, 15)], fill=(60, 130, 40, 255))))
+V6_ICON_FNS = {
+    'event_triangle': v6_i_cone, 'event_triangle_eyes': v6_i_eyes,
+    'event_triangle_lying': v6_i_lying, 'event_triangle_star': v6_i_star,
+    'event_triangle_wanderer': v6_i_wanderer, 'event_slab': v6_i_slab,
+    'event_tower': v6_i_tower, 'event_ufo': v6_i_ufo, 'event_spaceship': v6_i_ship,
+    'event_mushrooms': v6_i_mush, 'event_longlegs': v6_i_longlegs,
+    'event_blue_stranger': v6_i_blue, 'event_portal': v6_i_portal,
+    'event_castle': v6_i_castle, 'event_wrong_house': v6_i_house,
+    'event_hell_portal': v6_i_hell, 'event_flower_man': v6_i_flower,
+    'event_pillar': v6_i_pillar, 'event_hole': v6_i_hole,
+    'event_cave_demon': v6_i_demon, 'event_nevelim': v6_i_nevelim,
+    'event_eye': v6_i_eye, 'event_giant_nevelim': v6_i_giant,
+    'event_fake_player': v6_i_fake, 'event_one_eye_giant': v6_i_one_eye,
+}
+for _n, _fn in V6_ICON_FNS.items():
+    v6_icon(_n, _fn)
+
+print('0.6.0: all mod textures, blocks, item icons and entity skins rebuilt from the photos')

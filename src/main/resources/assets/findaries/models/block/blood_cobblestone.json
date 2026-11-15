@@ -1,7 +1,9 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "all": "findaries:block/blood_cobblestone",
+    "side": "findaries:block/blood_cobblestone",
+    "top": "findaries:block/blood_cobblestone_top",
+    "bottom": "findaries:block/blood_cobblestone_bottom",
     "particle": "findaries:block/blood_cobblestone"
   },
   "render_type": "minecraft:solid"

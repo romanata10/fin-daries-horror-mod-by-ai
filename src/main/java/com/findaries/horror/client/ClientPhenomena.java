@@ -413,6 +413,10 @@ public final class ClientPhenomena {
             g.tri(v[f[0]][0], v[f[0]][1], v[f[0]][2],
                   v[f[1]][0], v[f[1]][1], v[f[1]][2],
                   v[f[2]][0], v[f[2]][1], v[f[2]][2], cols[i], sh[i]);
+            // a translucent, larger halo makes the diamond look blurred like image-14
+            g.tri(v[f[0]][0] * 1.16D, v[f[0]][1] * 1.16D, v[f[0]][2],
+                  v[f[1]][0] * 1.16D, v[f[1]][1] * 1.16D, v[f[1]][2],
+                  v[f[2]][0] * 1.16D, v[f[2]][1] * 1.16D, v[f[2]][2], 0xA8CFF6, 0.20F);
         }
     }
 
@@ -477,6 +481,8 @@ public final class ClientPhenomena {
         g.box(-7, 0, -5, 7, 2, 5, 0x1E6FC8, true);
         g.box(-4, 2, -4, 4, 3, 4, 0x2E8FE8, true);
         g.box(-1, 3, -1, 1, 4, 1, 0xFF8A28, false);
+        g.quad(-7, 1, -1, -14, 2, -1, -14, 2, 1, -7, 1, 1, 0xE8F4FF, 0.95F);
+        g.quad(7, 1, -1, 14, 2, -1, 14, 2, 1, 7, 1, 1, 0xE8F4FF, 0.95F);
         double flick = 0.8D + 0.2D * Math.sin(t * 2.1F);
         g.beam(0, 1, 0, -30 * flick, 80 * flick, 0, 4.0D, 0x3A6FA0);
     }
@@ -535,7 +541,7 @@ public final class ClientPhenomena {
             double z = (r.nextDouble() * 2.0D - 1.0D) * 470.0D;
             double len = 30.0D + r.nextDouble() * 150.0D;
             double w = 2.0D + r.nextDouble() * 4.0D;
-            int color = r.nextInt(3) == 0 ? 0x8E9AA8 : 0x4E5866;
+            int color = r.nextInt(3) == 0 ? 0xDCE6F2 : 0x6A788A;
             if (!insideUfo(x, z - len * 0.5D, w + 4.0D) || !insideUfo(x, z + len * 0.5D, w + 4.0D)) {
                 continue;
             }
@@ -551,8 +557,17 @@ public final class ClientPhenomena {
             if (Math.abs(z) + len * 0.5D > 296.0D) {
                 continue;
             }
-            int color = r.nextInt(3) == 0 ? 0x8E9AA8 : 0x4E5866;
+            int color = r.nextInt(3) == 0 ? 0xDCE6F2 : 0x6A788A;
             g.quad(side, y - w, z - len * 0.5D, side, y + w, z - len * 0.5D, side, y + w, z + len * 0.5D, side, y - w, z + len * 0.5D, color, 1.0F);
+        }
+        // white rain streaks falling under the hull (image-7)
+        for (int i = 0; i < 46; i++) {
+            double rx = (r.nextDouble() * 2.0D - 1.0D) * 190.0D;
+            double rz = (r.nextDouble() * 2.0D - 1.0D) * 430.0D;
+            double ry = -h - 12.0D - r.nextDouble() * 150.0D;
+            double len = 12.0D + r.nextDouble() * 30.0D;
+            g.quad(rx, ry, rz, rx + 1.0D, ry, rz, rx + 1.0D, ry - len, rz, rx, ry - len, rz,
+                    0xE3EAF4, 0.55F);
         }
         // the yellow circle and the yellow specks around it
         final int yellow = 0xF2D54A;
@@ -578,7 +593,7 @@ public final class ClientPhenomena {
     private static void drawWalkers(Geo g, Active a, float t, Vec3 cam) {
         Random r = new Random(a.seed);
         int count = 3 + r.nextInt(3);
-        final int color = 0xE8E4E0, dark = 0xCFC9C4;
+        final int color = 0xF2EEEA, dark = 0xD8D2CC;
         for (int i = 0; i < count; i++) {
             double ang = r.nextDouble() * Math.PI * 2.0D;
             double dist = i == 0 ? 0.0D : 25.0D + r.nextDouble() * 55.0D;
@@ -626,6 +641,7 @@ public final class ClientPhenomena {
         double base = a.y - height + 0.55D * t;
         g.begin(a.x - cam.x, base - cam.y, a.z - cam.z, 0.0D, 1.0D, 1.0D, 1.0F);
         g.box(-half, 0, -half, half, height, half, 0x1A1C22, true);
+        g.box(-18, 30, -18, 18, 32, 18, 0xEEF3FA, true);
         Random r = new Random(a.seed);
         for (int i = 0; i < 44; i++) {
             double u = (r.nextDouble() * 2.0D - 1.0D) * (half - 0.6D);
