@@ -204,6 +204,15 @@ public final class Journey {
                 }
                 rememberReturn(player);
                 player.teleportTo(level, 8.5D, GROUND + 1, 8.5D, 0.0F, 0.0F);
+                // 0.8.0 BUGFIX: the old exit was a 1-in-31 window in a wall, so the dimension
+                // was practically impossible to leave. Put a freedom portal one block away
+                // from the spawn, in the open corridor, on both floors.
+                BlockPos exit = new BlockPos(9, GROUND + 1, 8);
+                level.setBlock(exit, ModRegistry.FREEDOM_PORTAL.get().defaultBlockState(), 3);
+                level.setBlock(exit.above(), ModRegistry.FREEDOM_PORTAL.get().defaultBlockState(), 3);
+                BlockPos upper = new BlockPos(9, GROUND + 8, 8);
+                level.setBlock(upper, ModRegistry.FREEDOM_PORTAL.get().defaultBlockState(), 3);
+                level.setBlock(upper.above(), ModRegistry.FREEDOM_PORTAL.get().defaultBlockState(), 3);
                 player.playNotifySound(SoundEvents.WOODEN_DOOR_CLOSE, SoundSource.AMBIENT, 1.0F, 0.5F);
                 data.putInt(WD_TIME, 0);
                 HorrorDirector.later(60, () -> spawnFalsePlayers(level, player));

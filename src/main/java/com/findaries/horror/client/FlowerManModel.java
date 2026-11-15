@@ -43,16 +43,16 @@ public class FlowerManModel extends EntityModel<FlowerManEntity> {
                 CubeListBuilder.create().texOffs(64, 32).addBox(-1.0F, -12.0F, -1.0F, 2.0F, 12.0F, 2.0F),
                 PartPose.offset(0.0F, -32.0F, 0.0F));
         column.addOrReplaceChild("petal_a",
-                CubeListBuilder.create().texOffs(16, 32).addBox(-7.0F, -18.0F, 0.0F, 14.0F, 7.0F, 0.0F),
+                CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
                 PartPose.offset(0.0F, -32.0F, 0.0F));
         column.addOrReplaceChild("petal_b",
-                CubeListBuilder.create().texOffs(16, 32).addBox(-7.0F, -18.0F, 0.0F, 14.0F, 7.0F, 0.0F),
+                CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
                 PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, Mth.HALF_PI, 0.0F));
         column.addOrReplaceChild("petal_c",
-                CubeListBuilder.create().texOffs(16, 32).addBox(-7.0F, -18.0F, 0.0F, 14.0F, 7.0F, 0.0F),
+                CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
                 PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, 0.7853982F, 0.0F));
         column.addOrReplaceChild("petal_d",
-                CubeListBuilder.create().texOffs(16, 32).addBox(-7.0F, -18.0F, 0.0F, 14.0F, 7.0F, 0.0F),
+                CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
                 PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, -0.7853982F, 0.0F));
         column.addOrReplaceChild("core",
                 CubeListBuilder.create().texOffs(48, 32).addBox(-4.0F, -19.0F, -4.0F, 8.0F, 8.0F, 8.0F),

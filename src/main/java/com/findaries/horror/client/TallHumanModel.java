@@ -29,16 +29,16 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         public static final Shape WANDERER = new Shape(0.7F, 0.45F, 1.5F, 0.18F, 2.5F, 3.2F, Mth.HALF_PI, false);
         public static final Shape SHE = new Shape(0.7F, 0.38F, 1.5F, 0.18F, 2.2F, 3.0F, 0.03F, false);
         /** Image-12: extremely thin, horned, almost all legs. */
-        public static final Shape RED_DEMON = new Shape(0.45F, 0.14F, 2.2F, 0.08F, 2.2F, 3.9F, 0.02F, true);
+        public static final Shape RED_DEMON = new Shape(0.42F, 0.12F, 2.3F, 0.06F, 2.4F, 4.2F, 0.02F, true);
         public static final Shape CAVE_DEMON = RED_DEMON;
         public static final Shape SKY_PERSON = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, false);
         public static final Shape DANGER_12 = new Shape(0.6F, 0.28F, 1.5F, 0.16F, 2.4F, 3.2F, 0.25F, false);
         /** Image-19: a wide black rectangle with a small head and two yellow eyes. */
-        public static final Shape ONE_EYE_GIANT = new Shape(0.7F, 1.3F, 2.6F, 0.30F, 0.6F, 1.8F, 0.0F, false);
+        public static final Shape ONE_EYE_GIANT = new Shape(0.55F, 1.4F, 2.8F, 0.30F, 0.6F, 1.9F, 0.0F, false);
         /** Image-22: very tall, very thin, dark navy, cube head with white eyes. */
-        public static final Shape NEVELIM = new Shape(0.6F, 0.25F, 2.3F, 0.10F, 2.8F, 3.7F, 0.02F, false);
+        public static final Shape NEVELIM = new Shape(0.55F, 0.20F, 2.5F, 0.09F, 3.0F, 4.0F, 0.02F, false);
         /** Image-20: a black monolith with a thin blue outline and a dotted head. */
-        public static final Shape EYE = new Shape(0.6F, 1.1F, 2.2F, 0.14F, 0.4F, 1.5F, 0.0F, false);
+        public static final Shape EYE = new Shape(0.5F, 1.0F, 2.4F, 0.12F, 0.35F, 1.6F, 0.0F, false);
     }
 
     private final Shape shape;

@@ -461,12 +461,31 @@ public final class Structures {
             set(level, cx - 1, floor, cz + 3, Blocks.GLASS.defaultBlockState());
             set(level, cx + 1, floor, cz + 3, Blocks.GLASS.defaultBlockState());
         }
-        // furniture downstairs
+        // 0.8.0, refs 15-18: warm wooden room - framed picture, wall torches, upper gallery
+        for (int floor : new int[]{y, y + 5}) {
+            for (int i = -2; i <= 2; i++) {
+                set(level, cx + i, floor + 3, cz - 2, Blocks.GLOWSTONE.defaultBlockState());
+            }
+            set(level, cx - 2, floor + 1, cz - 2, Blocks.OAK_PLANKS.defaultBlockState());
+            set(level, cx - 2, floor + 2, cz - 2, Blocks.RED_CONCRETE.defaultBlockState());
+            set(level, cx - 1, floor + 2, cz - 2, Blocks.ORANGE_CONCRETE.defaultBlockState());
+            set(level, cx - 1, floor + 1, cz - 2, Blocks.YELLOW_CONCRETE.defaultBlockState());
+            set(level, cx - 2, floor + 1, cz - 1, Blocks.BLUE_CONCRETE.defaultBlockState());
+            set(level, cx - 1, floor + 1, cz - 1, Blocks.GREEN_CONCRETE.defaultBlockState());
+        }
+        // upper gallery rail (photo 17) - the upstairs floor is y+4
+        for (int i = -2; i <= 2; i++) {
+            set(level, cx + i, y + 5, cz - 1, Blocks.OAK_FENCE.defaultBlockState());
+            set(level, cx + i, y + 5, cz + 1, Blocks.OAK_FENCE.defaultBlockState());
+        }
+        // furniture downstairs: workshop, storage, barrels (photo 18)
         set(level, cx - 2, y, cz + 2, Blocks.CRAFTING_TABLE.defaultBlockState());
         set(level, cx - 2, y, cz + 1, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.EAST));
         set(level, cx + 1, y, cz + 2, Blocks.OAK_FENCE.defaultBlockState());
         set(level, cx + 1, y + 1, cz + 2, Blocks.OAK_PRESSURE_PLATE.defaultBlockState());
         set(level, cx + 2, y, cz + 2, Blocks.BARREL.defaultBlockState());
+        set(level, cx + 2, y + 1, cz + 2, Blocks.BARREL.defaultBlockState());
+        set(level, cx - 2, y + 5, cz - 1, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.EAST));
         // a bed upstairs - ordinary, nothing wrong with the bed any more
         set(level, cx - 2, y + 5, cz + 2, Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.WEST)
                 .setValue(BedBlock.PART, BedPart.HEAD));

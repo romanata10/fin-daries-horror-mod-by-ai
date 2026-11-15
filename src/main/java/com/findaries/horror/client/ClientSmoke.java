@@ -314,6 +314,13 @@ public final class ClientSmoke {
         });
         step(2, () -> server(p -> fly(p, 8.5D, g + 2.0D, 8.5D, 0.0F, 0.0F)));
         step(70, () -> shot("33_wonderdream_corridor"));
+        // 0.8.0 regression check: a guaranteed exit must exist right next to the spawn
+        step(2, () -> server(p -> {
+            BlockPos exit = new BlockPos(9, g + 1, 8);
+            if (!p.serverLevel().getBlockState(exit).is(ModRegistry.FREEDOM_PORTAL.get())) {
+                throw new IllegalStateException("FD SMOKE: wonderdream freedom portal missing at " + exit);
+            }
+        }));
         step(2, () -> server(p -> {
             Journey.spawnFalsePlayers(p.serverLevel(), p);
             fly(p, 8.5D, g + 2.0D, 8.5D, 0.0F, 4.0F);
@@ -368,6 +375,19 @@ public final class ClientSmoke {
         step(70, () -> shot("38_wrong_house_hole"));
         step(2, () -> server(p -> fly(p, holeX + 0.5D, holeY + 14.0D, holeZ - 1.0D, 0.0F, 68.0F)));
         step(60, () -> shot("38b_hole"));
+        // ---- 0.8.0: the_wonderdream must always be escapable ----
+        step(2, () -> server(p -> Journey.go(p, Journey.Dest.WONDERDREAM)));
+        step(60, () -> {
+            expectDimension(Journey.WONDERDREAM);
+            server(p -> {
+                BlockPos exit = new BlockPos(9, g + 1, 8);
+                if (!p.serverLevel().getBlockState(exit).is(ModRegistry.FREEDOM_PORTAL.get())) {
+                    throw new IllegalStateException("FD SMOKE: no way out of the_wonderdream");
+                }
+            });
+        });
+        step(2, () -> server(p -> Journey.go(p, Journey.Dest.ALIVE)));
+        step(60, () -> expectDimension(Level.OVERWORLD));
         // ---- thrown to the main menu ----
         step(40, () -> server(Net::kick));
     }

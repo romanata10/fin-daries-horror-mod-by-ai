@@ -259,6 +259,14 @@ public final class HorrorDirector {
                 return 1;
             }));
             root.then(tp);
+
+            // 0.8.0: a guaranteed way back from any dream dimension, even if a portal breaks
+            root.then(Commands.literal("exit").executes(ctx -> {
+                ServerPlayer player = ctx.getSource().getPlayerOrException();
+                Journey.go(player, Journey.Dest.ALIVE);
+                ctx.getSource().sendSuccess(() -> Component.literal("Back to the ordinary world."), false);
+                return 1;
+            }));
             event.getDispatcher().register(root);
         }
     }
@@ -820,7 +828,7 @@ public final class HorrorDirector {
     }
 
     private static boolean wrongHouse(ServerPlayer player) {
-        BlockPos pos = site(player, 55.0D, 95.0D, 4, 3);
+        BlockPos pos = site(player, 22.0D, 40.0D, 4, 3);
         if (pos == null) {
             return false;
         }
