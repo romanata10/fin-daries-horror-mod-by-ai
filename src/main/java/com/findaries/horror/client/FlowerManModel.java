@@ -54,6 +54,19 @@ public class FlowerManModel extends EntityModel<FlowerManEntity> {
         column.addOrReplaceChild("petal_d",
                 CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
                 PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, -0.7853982F, 0.0F));
+        // image-11 has a full sunflower head: four more petals between the crossed ones
+        column.addOrReplaceChild("petal_e",
+                CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
+                PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, 0.3926991F, 0.0F));
+        column.addOrReplaceChild("petal_f",
+                CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
+                PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, 1.1780972F, 0.0F));
+        column.addOrReplaceChild("petal_g",
+                CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
+                PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, -0.3926991F, 0.0F));
+        column.addOrReplaceChild("petal_h",
+                CubeListBuilder.create().texOffs(16, 32).addBox(-9.0F, -19.0F, 0.0F, 18.0F, 8.0F, 0.0F),
+                PartPose.offsetAndRotation(0.0F, -32.0F, 0.0F, 0.0F, -1.1780972F, 0.0F));
         column.addOrReplaceChild("core",
                 CubeListBuilder.create().texOffs(48, 32).addBox(-4.0F, -19.0F, -4.0F, 8.0F, 8.0F, 8.0F),
                 PartPose.offset(0.0F, -32.0F, 0.0F));
