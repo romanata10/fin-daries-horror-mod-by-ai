@@ -23,22 +23,22 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
 
     /** All factors are relative to a normal player (legs/arms/body 12 px long, limbs 4 px thick). */
     public record Shape(float head, float bodyWidth, float bodyHeight, float limbWidth, float armLength, float legLength, float armSpread, boolean horns) {
-        public static final Shape LONGLEGS = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 3.0F, 5.0F, 0.0F, false);
-        public static final Shape BLUE_STRANGER = new Shape(1.0F, 0.9F, 1.4F, 0.85F, 2.0F, 2.6F, 0.04F, false);
-        public static final Shape WATCHER = new Shape(0.6F, 0.35F, 1.3F, 0.3F, 1.9F, 2.8F, 0.45F, false);
-        public static final Shape WANDERER = new Shape(0.9F, 0.8F, 1.5F, 0.6F, 2.6F, 3.6F, Mth.HALF_PI, false);
-        public static final Shape SHE = new Shape(0.75F, 0.3F, 1.6F, 0.25F, 2.5F, 3.0F, 0.08F, false);
-        /** Very thin, very tall, horned: the red-black demon of the Hellway and of the caves. */
-        public static final Shape RED_DEMON = new Shape(0.55F, 0.18F, 2.2F, 0.14F, 3.2F, 3.8F, 0.12F, true);
+        public static final Shape LONGLEGS = new Shape(0.9F, 0.5F, 1.4F, 0.22F, 2.8F, 4.6F, 0.05F, false);
+        public static final Shape BLUE_STRANGER = new Shape(0.9F, 0.5F, 1.6F, 0.22F, 2.2F, 3.2F, 0.05F, false);
+        public static final Shape WATCHER = new Shape(0.5F, 0.22F, 1.6F, 0.12F, 3.0F, 3.8F, 0.35F, false);
+        public static final Shape WANDERER = new Shape(0.6F, 0.35F, 1.8F, 0.14F, 2.9F, 3.6F, Mth.HALF_PI, false);
+        public static final Shape SHE = new Shape(0.6F, 0.3F, 1.8F, 0.14F, 2.2F, 3.4F, 0.03F, false);
+        /** Image-12: extremely thin, horned, almost all legs. */
+        public static final Shape RED_DEMON = new Shape(0.35F, 0.10F, 2.6F, 0.06F, 2.0F, 5.2F, 0.02F, true);
         public static final Shape CAVE_DEMON = RED_DEMON;
         public static final Shape SKY_PERSON = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, false);
-        public static final Shape DANGER_12 = new Shape(0.6F, 0.3F, 1.6F, 0.28F, 2.4F, 3.0F, 0.4F, false);
-        /** Huge, broad, one-eyed giant of stonehell. */
-        public static final Shape ONE_EYE_GIANT = new Shape(2.0F, 1.5F, 2.4F, 0.85F, 2.6F, 4.2F, 0.15F, false);
-        /** Thin pale Nevelim of the dark forest. */
-        public static final Shape NEVELIM = new Shape(0.8F, 0.24F, 2.3F, 0.19F, 3.1F, 4.1F, 0.05F, false);
-        /** The Eye object: one enormous cubic eye, almost no body. */
-        public static final Shape EYE = new Shape(2.8F, 0.22F, 0.35F, 0.2F, 0.4F, 0.6F, 0.0F, false);
+        public static final Shape DANGER_12 = new Shape(0.5F, 0.2F, 1.8F, 0.12F, 2.8F, 3.6F, 0.25F, false);
+        /** Image-19: a wide black rectangle with a small head and two yellow eyes. */
+        public static final Shape ONE_EYE_GIANT = new Shape(0.7F, 1.5F, 3.0F, 0.35F, 0.7F, 2.2F, 0.0F, false);
+        /** Image-22: very tall, very thin, dark navy, cube head with white eyes. */
+        public static final Shape NEVELIM = new Shape(0.55F, 0.18F, 2.6F, 0.08F, 3.4F, 4.6F, 0.02F, false);
+        /** Image-20: a black monolith with a thin blue outline and a dotted head. */
+        public static final Shape EYE = new Shape(0.5F, 1.3F, 2.6F, 0.12F, 0.3F, 1.6F, 0.0F, false);
     }
 
     private final Shape shape;

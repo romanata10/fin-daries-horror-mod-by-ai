@@ -399,32 +399,20 @@ public final class ClientPhenomena {
         }
     }
 
-    /** The "star" is NOT a cone: it is a light blue 3D four-pointed star / diamond. */
+    /** Image-14: a soft, blurry blue 3D diamond / octahedron in the sky. */
     private static void drawStar3D(Geo g, Active a, float t) {
-        final double outer = 255.0D, inner = 90.0D, thick = 24.0D;
-        double[] xs = new double[8], ys = new double[8];
-        for (int i = 0; i < 8; i++) {
-            double ang = Math.PI * 2.0D * i / 8;
-            double rad = (i & 1) == 0 ? outer : inner;
-            xs[i] = Math.cos(ang) * rad;
-            ys[i] = Math.sin(ang) * rad;
-        }
-        for (int i = 0; i < 8; i++) {
-            int j = (i + 1) & 7;
-            g.tri(0.0D, 0.0D, -thick, xs[i], ys[i], -thick, xs[j], ys[j], -thick, 0xB9E3FF, 1.0F);
-            g.tri(0.0D, 0.0D, thick, xs[j], ys[j], thick, xs[i], ys[i], thick, 0x5487C8, 0.9F);
-            g.quad(xs[i], ys[i], -thick, xs[j], ys[j], -thick, xs[j], ys[j], thick, xs[i], ys[i], thick, 0x7FB6EF, 0.95F);
-        }
-        Random r = new Random(a.seed);
-        for (int i = 0; i < 28; i++) {
-            double ang = r.nextDouble() * Math.PI * 2.0D;
-            double d = 30.0D + r.nextDouble() * 240.0D;
-            double x = Math.cos(ang) * d, y = Math.sin(ang) * d;
-            double s = 3.0D + r.nextDouble() * 6.0D;
-            if (((int) (t / 7.0F) + i) % 5 == 0) {
-                continue;
-            }
-            g.quad(x - s, y - s, thick + 2, x + s, y - s, thick + 2, x + s, y + s, thick + 2, x - s, y + s, thick + 2, 0xFFFFFF, 1.0F);
+        final double R = 230.0D, D = 78.0D;
+        final int light = 0xB6DCFF, mid = 0x7FB0EA, dark = 0x4E86C8;
+        double[][] v = {{0, R, 0}, {0, -R, 0}, {-R, 0, 0}, {R, 0, 0}, {0, 0, -D}, {0, 0, D}};
+        int[][] faces = {{0, 4, 2}, {0, 3, 4}, {0, 2, 5}, {0, 5, 3},
+                         {1, 2, 4}, {1, 4, 3}, {1, 5, 2}, {1, 3, 5}};
+        int[] cols = {light, light, mid, mid, mid, dark, dark, dark};
+        float[] sh = {1.0F, 0.94F, 0.88F, 0.82F, 0.86F, 0.78F, 0.72F, 0.66F};
+        for (int i = 0; i < faces.length; i++) {
+            int[] f = faces[i];
+            g.tri(v[f[0]][0], v[f[0]][1], v[f[0]][2],
+                  v[f[1]][0], v[f[1]][1], v[f[1]][2],
+                  v[f[2]][0], v[f[2]][1], v[f[2]][2], cols[i], sh[i]);
         }
     }
 
@@ -436,18 +424,22 @@ public final class ClientPhenomena {
         double dx = a.x - cam.x, dy = a.y - cam.y + sink, dz = a.z - cam.z;
         double k = Math.min(1.0D, 100.0D / (Math.sqrt(dx * dx + dy * dy + dz * dz) + 430.0D));
         g.begin(dx, dy, dz, 0.0D, 1.0D, k, fade(t, 300, 24.0F));
-        final int body = 0x171820, head = 0x0B0C11;
-        g.box(-60, 0, -20, 60, 690, 20, 0x25262E, true);
-        g.box(-80, 690, -24, 80, 860, 24, 0x15161C, true);
-        g.beam(-60, 850, 0, -140, 940, -10, 12, 0x25262E);
-        g.beam(60, 850, 0, 140, 940, -10, 12, 0x25262E);
-        g.box(-60, 810, -27, -24, 832, -25, 0xFF8A22, false);
-        g.box(24, 810, -27, 60, 832, -25, 0xFF8A22, false);
-        double open = t < 110 ? 3.0D : Math.min(64.0D, (t - 110) * 1.4D);
-        g.box(-52, 742, -27, 52, 742 + open, -25, 0x020203, false);
+        final int body = 0x1B1D22, head = 0x0C0D10, bone = 0xE8E8E0;
+        // image-21 seen from below: two enormous legs, wide torso, long arms, cube head
+        g.box(-70, 0, -20, -20, 520, 20, body, true);
+        g.box(20, 0, -20, 70, 520, 20, body, true);
+        g.box(-90, 520, -24, 90, 760, 24, body, true);
+        g.box(-140, 300, -18, -90, 740, 18, body, true);
+        g.box(90, 300, -18, 140, 740, 18, body, true);
+        g.box(-70, 760, -30, 70, 860, 30, head, true);
+        g.box(-46, 800, -32, -18, 818, -30, bone, false);
+        g.box(18, 800, -32, 46, 818, -30, bone, false);
+        for (int i = 0; i < 6; i++) {
+            g.box(-40 + i * 14, 770, -32, -34 + i * 14, 786, -30, bone, false);
+        }
         if (t >= 130 && t < 225) {
-            g.box(-34, -40, -32, 34, 742, -30, 0xFF6A12, false);
-            g.box(-14, -40, -35, 14, 742, -33, 0xFFC060, false);
+            g.box(-34, -40, -34, 34, 770, -32, 0xFF6A12, false);
+            g.box(-14, -40, -37, 14, 770, -35, 0xFFC060, false);
         }
         if (t >= 215) {
             double burst = Math.min(1.0D, (t - 215) / 28.0D) * 420.0D;
@@ -482,13 +474,11 @@ public final class ClientPhenomena {
         double p = Math.max(0.0D, 1.0D - t / 100.0D);
         double x = a.x - 90.0D * p, y = a.y + 260.0D * p, z = a.z;
         g.begin(x - cam.x, y - cam.y, z - cam.z, 0.0D, 1.0D, 1.0D, 1.0F);
-        g.box(-6, 0, -6, 6, 2, 6, 0xC8C8CD, true);
-        g.box(-3.5, 2, -3.5, 3.5, 4, 3.5, 0x82C8F0, true);
-        // fire behind it
+        g.box(-7, 0, -5, 7, 2, 5, 0x1E6FC8, true);
+        g.box(-4, 2, -4, 4, 3, 4, 0x2E8FE8, true);
+        g.box(-1, 3, -1, 1, 4, 1, 0xFF8A28, false);
         double flick = 0.8D + 0.2D * Math.sin(t * 2.1F);
-        g.beam(0, 3, 0, -34 * flick, 98 * flick, 0, 5.0D, 0xFF7A18);
-        g.beam(0, 3, 0, -22 * flick, 64 * flick, 0, 3.0D, 0xFFD23C);
-        g.beam(0, 3, 0, -50 * flick, 145 * flick, 0, 2.0D, 0x5A5A5A);
+        g.beam(0, 1, 0, -30 * flick, 80 * flick, 0, 4.0D, 0x3A6FA0);
     }
 
     // ---- 4. the dark slab with green and orange lights -------------------------------------------
@@ -498,10 +488,10 @@ public final class ClientPhenomena {
             return;
         }
         final double hw = 25.0D, hh = 5.0D, hl = 70.0D;
-        g.box(-hw, -hh, -hl, hw, hh, hl, 0x17181F, true);
+        g.box(-hw, -hh, -hl, hw, hh, hl, 0x0A0B10, true);
         for (int i = 0; i < 4; i++) {
             double z = -48.0D + i * 32.0D;
-            int color = (i % 2 == 0) ? 0x3FD24F : 0xE8822E;
+            int color = (i % 2 == 0) ? 0x37FF5A : 0xFF7A1F;
             // lights on the top, on the bottom and on both long sides
             g.quad(-9, hh + 1.5D, z - 5, 9, hh + 1.5D, z - 5, 9, hh + 1.5D, z + 5, -9, hh + 1.5D, z + 5, color, 1.0F);
             g.quad(-9, -hh - 1.5D, z - 5, 9, -hh - 1.5D, z - 5, 9, -hh - 1.5D, z + 5, -9, -hh - 1.5D, z + 5, color, 1.0F);
@@ -530,7 +520,7 @@ public final class ClientPhenomena {
             return;
         }
         final double h = 55.0D;
-        final int body = 0x1B222C, bodyTop = 0x242C38;
+        final int body = 0x12161E, bodyTop = 0x1C2230;
         int n = UFO_OUTLINE.length;
         for (int i = 0; i < n; i++) {
             double[] p = UFO_OUTLINE[i], q = UFO_OUTLINE[(i + 1) % n];
@@ -545,7 +535,7 @@ public final class ClientPhenomena {
             double z = (r.nextDouble() * 2.0D - 1.0D) * 470.0D;
             double len = 30.0D + r.nextDouble() * 150.0D;
             double w = 2.0D + r.nextDouble() * 4.0D;
-            int color = r.nextInt(3) == 0 ? 0xAEB8C4 : 0x6F7B8A;
+            int color = r.nextInt(3) == 0 ? 0x8E9AA8 : 0x4E5866;
             if (!insideUfo(x, z - len * 0.5D, w + 4.0D) || !insideUfo(x, z + len * 0.5D, w + 4.0D)) {
                 continue;
             }
@@ -561,11 +551,11 @@ public final class ClientPhenomena {
             if (Math.abs(z) + len * 0.5D > 296.0D) {
                 continue;
             }
-            int color = r.nextInt(3) == 0 ? 0xAEB8C4 : 0x6F7B8A;
+            int color = r.nextInt(3) == 0 ? 0x8E9AA8 : 0x4E5866;
             g.quad(side, y - w, z - len * 0.5D, side, y + w, z - len * 0.5D, side, y + w, z + len * 0.5D, side, y - w, z + len * 0.5D, color, 1.0F);
         }
         // the yellow circle and the yellow specks around it
-        final int yellow = 0xF2E23A;
+        final int yellow = 0xF2D54A;
         double cx = -70.0D, cz = 260.0D, rad = 62.0D, y = -h - 6.0D;
         for (int i = 0; i < 24; i++) {
             double a0 = Math.PI * 2.0D * i / 24.0D, a1 = Math.PI * 2.0D * (i + 1) / 24.0D;
@@ -588,7 +578,7 @@ public final class ClientPhenomena {
     private static void drawWalkers(Geo g, Active a, float t, Vec3 cam) {
         Random r = new Random(a.seed);
         int count = 3 + r.nextInt(3);
-        final int color = 0xDCCACC, dark = 0xC4B0B4;
+        final int color = 0xE8E4E0, dark = 0xCFC9C4;
         for (int i = 0; i < count; i++) {
             double ang = r.nextDouble() * Math.PI * 2.0D;
             double dist = i == 0 ? 0.0D : 25.0D + r.nextDouble() * 55.0D;
@@ -613,8 +603,8 @@ public final class ClientPhenomena {
                 double cx = Math.cos(la), cz = Math.sin(la);
                 double kneeR = 17.0D + r.nextDouble() * 6.0D, footR = 30.0D + r.nextDouble() * 12.0D;
                 double kneeY = h - 20.0D - r.nextDouble() * 8.0D;
-                g.beam(0, h - 12, 0, cx * kneeR, kneeY, cz * kneeR, 2.6D, dark);
-                g.beam(cx * kneeR, kneeY, cz * kneeR, cx * footR, 0, cz * footR, 2.2D, color);
+                g.beam(0, h - 12, 0, cx * kneeR, kneeY, cz * kneeR, 1.8D, dark);
+                g.beam(cx * kneeR, kneeY, cz * kneeR, cx * footR, 0, cz * footR, 1.5D, color);
             }
         }
     }
@@ -635,20 +625,20 @@ public final class ClientPhenomena {
         final double half = 6.0D, height = 64.0D;
         double base = a.y - height + 0.55D * t;
         g.begin(a.x - cam.x, base - cam.y, a.z - cam.z, 0.0D, 1.0D, 1.0D, 1.0F);
-        g.box(-half, 0, -half, half, height, half, 0x2D3138, true);
+        g.box(-half, 0, -half, half, height, half, 0x1A1C22, true);
         Random r = new Random(a.seed);
         for (int i = 0; i < 44; i++) {
             double u = (r.nextDouble() * 2.0D - 1.0D) * (half - 0.6D);
             double v = r.nextDouble() * (height - 16.0D);
             double len = 3.0D + r.nextDouble() * 12.0D;
             double w = 0.08D + r.nextDouble() * 0.16D;
-            towerFace(g, r.nextInt(4), u - w, v, u + w, v + len, half, 0.05D, 0x596069);
+            towerFace(g, r.nextInt(4), u - w, v, u + w, v + len, half, 0.05D, 0x3A3E48);
         }
         for (int i = 0; i < 46; i++) {
             double u = (r.nextDouble() * 2.0D - 1.0D) * (half - 0.8D);
             double v = 1.0D + r.nextDouble() * (height - 6.0D);
             double len = 1.4D + r.nextDouble() * 2.2D;
-            towerFace(g, r.nextInt(4), u - 0.28D, v, u + 0.28D, v + len, half, 0.1D, 0xF5D21F);
+            towerFace(g, r.nextInt(4), u - 0.28D, v, u + 0.28D, v + len, half, 0.1D, 0xF2C230);
         }
         // yellow dots circling it
         for (int i = 0; i < 7; i++) {
@@ -658,7 +648,7 @@ public final class ClientPhenomena {
             double hy = 8.0D + r.nextDouble() * (height - 16.0D) + Math.sin(t * 0.05D + phase) * 3.0D;
             double ang = phase + t * speed;
             double x = Math.cos(ang) * radius, z = Math.sin(ang) * radius;
-            g.box(x - 1.3D, hy - 0.8D, z - 1.3D, x + 1.3D, hy + 0.8D, z + 1.3D, 0xF7E120, false);
+            g.box(x - 1.3D, hy - 0.8D, z - 1.3D, x + 1.3D, hy + 0.8D, z + 1.3D, 0xFFD84A, false);
         }
     }
 

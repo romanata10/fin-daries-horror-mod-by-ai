@@ -3,12 +3,12 @@
   "temperature": 0.8,
   "downfall": 0.4,
   "effects": {
-    "sky_color": 14262440,
-    "fog_color": 15451846,
-    "water_color": 3102408,
+    "sky_color": 12179696,
+    "fog_color": 14478328,
+    "water_color": 4159204,
     "water_fog_color": 329011,
-    "grass_color": 6545468,
-    "foliage_color": 4966442
+    "grass_color": 7143226,
+    "foliage_color": 4972586
   },
   "spawners": {
     "monster": [],

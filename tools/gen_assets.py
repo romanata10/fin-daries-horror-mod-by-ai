@@ -2,7 +2,7 @@
 """Generates the mod's textures and sounds (pip install pillow numpy soundfile).
 
 Run from the repository root:  python tools/gen_assets.py
-The faceless Steve skin (textures/entity/kill000145236.png) is a hand-made file and is not touched.
+The faceless Steve skin is taken from the user's reference photo; all other assets are rebuilt by the 0.5.0 section below.
 """
 import json
 import os
@@ -705,3 +705,520 @@ for nm, fn in (('event_triangle', i_cone), ('event_triangle_eyes', i_cone_eyes),
                ('event_fake_player', i_fake4), ('event_one_eye_giant', i_one_eye4)):
     icon4(nm, fn)
 print('0.4.0 assets written')
+
+# =====================================================================================================
+# 0.5.0 — FULL ASSET REBUILD FROM THE 22 REFERENCE PHOTOS
+# Everything below overwrites the textures / models / json produced above.
+# =====================================================================================================
+import base64  # noqa: E402
+import io  # noqa: E402
+
+V5_ASSETS = os.path.dirname(ROOT)                     # .../assets
+V5_RES = os.path.dirname(V5_ASSETS)                    # .../resources
+V5_DATA = os.path.join(V5_RES, 'data', 'findaries')
+V5_VAN = os.path.join(V5_ASSETS, 'minecraft', 'textures', 'block')
+V5_ITEM = os.path.join(ROOT, 'textures', 'item')
+V5_BLOCK = TEX_BLOCK
+V5_ENTITY = TEX_ENTITY
+V5_SOUND = SOUNDS
+for _d in (V5_VAN, V5_ITEM, V5_BLOCK, V5_ENTITY, V5_SOUND):
+    os.makedirs(_d, exist_ok=True)
+
+V5_R = random.Random(500)
+V5_STEVE_B64 = None
+
+
+def v5_c(c):
+    return tuple(c) + (255,) if len(c) == 3 else tuple(c)
+
+
+def v5_rect(im, box, colour, jitter=0):
+    x0, y0, x1, y1 = box
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            j = V5_R.randint(-jitter, jitter) if jitter else 0
+            im.putpixel((x, y), tuple(max(0, min(255, ch + j)) for ch in colour[:3]) + (255,))
+
+
+def v5_line(d, pts, colour, width=1):
+    d.line(pts, fill=v5_c(colour), width=width)
+
+
+def v5_skin(name, base, painter):
+    im = Image.new('RGBA', (64, 64), v5_c(base))
+    d = ImageDraw.Draw(im)
+    painter(d, im)
+    im.save(os.path.join(V5_ENTITY, name + '.png'))
+
+
+def v5_block(name, painter, frames=1, frametime=2, size=16):
+    if frames > 1:
+        im = Image.new('RGBA', (size, size * frames), (0, 0, 0, 0))
+        for f in range(frames):
+            for y in range(size):
+                for x in range(size):
+                    im.putpixel((x, f * size + y), v5_c(painter(f, x, y)))
+        im.save(os.path.join(V5_BLOCK, name + '.png'))
+        with open(os.path.join(V5_BLOCK, name + '.png.mcmeta'), 'w') as fh:
+            json.dump({'animation': {'frametime': frametime}}, fh, indent=2)
+            fh.write('\n')
+    else:
+        im = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        for y in range(size):
+            for x in range(size):
+                im.putpixel((x, y), v5_c(painter(0, x, y)))
+        im.save(os.path.join(V5_BLOCK, name + '.png'))
+
+
+def v5_van(name, painter, size=16):
+    im = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    for y in range(size):
+        for x in range(size):
+            im.putpixel((x, y), v5_c(painter(0, x, y)))
+    im.save(os.path.join(V5_VAN, name + '.png'))
+
+
+def v5_icon(name, painter):
+    im = Image.new('RGBA', (16, 16), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    painter(d, im)
+    im.save(os.path.join(V5_ITEM, name + '.png'))
+
+
+def v5_json(path, obj):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w') as fh:
+        json.dump(obj, fh, indent=2, ensure_ascii=False)
+        fh.write('\n')
+
+
+# ---- the faceless Steve skin, straight from the user's photo ----------------------------------
+try:
+    with open('/tmp/arena-coding-uploads/Стив без лица.png', 'rb') as fh:
+        V5_STEVE_B64 = base64.b64encode(fh.read()).decode()
+except OSError:
+    V5_STEVE_B64 = None
+if V5_STEVE_B64:
+    Image.open(io.BytesIO(base64.b64decode(V5_STEVE_B64))).convert('RGBA').save(
+        os.path.join(V5_ENTITY, 'kill000145236.png'))
+else:  # deterministic fallback drawn from scratch
+    def v5_steve(d, im):
+        v5_rect(im, (0, 0, 64, 64), (28, 34, 48))
+        v5_rect(im, (8, 0, 16, 8), (36, 24, 16))
+        v5_rect(im, (8, 8, 16, 16), (150, 110, 82))
+        v5_rect(im, (20, 20, 28, 32), (24, 120, 140))
+        v5_rect(im, (0, 20, 8, 32), (24, 120, 140))
+        v5_rect(im, (40, 20, 48, 32), (24, 120, 140))
+        v5_rect(im, (0, 48, 8, 64), (36, 44, 88))
+        v5_rect(im, (16, 48, 24, 64), (36, 44, 88))
+    v5_skin('kill000145236', (28, 34, 48), v5_steve)
+
+
+# ---- 1. entity skins, rebuilt to the reference silhouettes -----------------------------------
+def v5_sky(d, im):
+    v5_rect(im, (0, 0, 64, 64), (126, 128, 132), 5)
+    SK, HAIR, W, B = (187, 137, 108), (48, 32, 20), (240, 240, 240), (73, 58, 160)
+    v5_rect(im, (0, 0, 32, 16), SK, 4)
+    v5_rect(im, (8, 0, 16, 8), HAIR, 4)
+    v5_rect(im, (0, 8, 8, 11), HAIR, 4)
+    v5_rect(im, (16, 8, 24, 11), HAIR, 4)
+    v5_rect(im, (24, 8, 32, 16), HAIR, 4)
+    v5_rect(im, (8, 8, 16, 10), HAIR, 4)
+    d.point([(9, 12), (14, 12)], fill=v5_c(W))
+    d.point([(10, 12), (15, 12)], fill=v5_c(B))
+    v5_rect(im, (10, 14, 14, 16), (106, 64, 48), 2)
+    v5_rect(im, (22, 21, 26, 30), (48, 48, 52), 2)
+    v5_rect(im, (23, 22, 25, 24), (235, 30, 30))
+    v5_rect(im, (23, 25, 25, 27), (70, 220, 50))
+    v5_rect(im, (23, 28, 25, 29), (30, 30, 32))
+    for (x0, y0, x1, y1) in ((0, 28, 16, 30), (40, 28, 56, 30), (16, 60, 32, 62)):
+        v5_rect(im, (x0, y0, x1, y1), (84, 84, 88), 3)
+v5_skin('sky_person', (126, 128, 132), v5_sky)
+
+
+def v5_dark(d, im, base, rim, eyes=None, ribs=False, horns=False):
+    v5_rect(im, (0, 0, 64, 64), base, 3)
+    # subtle rim on the left / top of every cube face
+    for (x0, y0, x1, y1) in ((0, 0, 32, 16), (16, 16, 40, 32), (40, 16, 48, 32),
+                             (32, 48, 40, 64), (0, 16, 8, 32), (16, 48, 24, 64)):
+        d.rectangle([x0, y0, x1 - 1, y0], fill=v5_c(rim))
+        d.rectangle([x0, y0, x0, y1 - 1], fill=v5_c(rim))
+    if horns:
+        d.polygon([(8, 0), (10, 4), (12, 0)], fill=v5_c(rim))
+        d.polygon([(14, 0), (16, 4), (18, 0)], fill=v5_c(rim))
+    if eyes:
+        for (ex, ey) in eyes:
+            d.rectangle([ex, ey, ex + 1, ey + 1], fill=v5_c((255, 210, 90)))
+    if ribs:
+        for yy in (21, 24, 27, 30):
+            d.line([(21, yy), (27, yy)], fill=v5_c(rim), width=1)
+
+v5_skin('watcher', (8, 10, 18), lambda d, im: v5_dark(d, im, (8, 10, 18), (26, 34, 58)))
+v5_skin('wanderer', (10, 11, 22), lambda d, im: v5_dark(d, im, (10, 11, 22), (30, 38, 70)))
+v5_skin('blue_stranger', (12, 34, 92), lambda d, im: v5_dark(d, im, (12, 34, 92), (40, 80, 160)))
+v5_skin('danger_12', (14, 10, 26), lambda d, im: v5_dark(d, im, (14, 10, 26), (60, 40, 90)))
+v5_skin('she', (4, 4, 9), lambda d, im: v5_dark(d, im, (4, 4, 9), (70, 30, 100)))
+v5_skin('red_demon', (36, 5, 6), lambda d, im: v5_dark(
+    d, im, (36, 5, 6), (92, 14, 12), eyes=[(9, 11), (13, 11)], ribs=True, horns=True))
+v5_skin('cave_demon', (30, 6, 7), lambda d, im: v5_dark(
+    d, im, (30, 6, 7), (78, 16, 14), eyes=[(9, 11), (13, 11)], ribs=True, horns=True))
+v5_skin('one_eye_giant', (5, 5, 7), lambda d, im: v5_dark(
+    d, im, (5, 5, 7), (18, 18, 20), eyes=[(10, 10), (12, 10)]))
+v5_skin('nevelim', (9, 10, 24), lambda d, im: v5_dark(
+    d, im, (9, 10, 24), (26, 30, 60), eyes=[(10, 10), (13, 10)]))
+v5_skin('eye', (2, 2, 5), lambda d, im: v5_dark(
+    d, im, (2, 2, 5), (24, 40, 140), eyes=[(10, 10), (12, 10), (10, 12), (12, 12)]))
+v5_skin('fake_player', (150, 110, 82), lambda d, im: (
+    v5_rect(im, (0, 0, 64, 64), (150, 110, 82), 4),
+    v5_rect(im, (8, 0, 16, 8), (48, 32, 20), 4),
+    v5_rect(im, (20, 20, 28, 32), (60, 110, 70), 4),
+    v5_rect(im, (0, 20, 8, 32), (60, 110, 70), 4),
+    v5_rect(im, (40, 20, 48, 32), (60, 110, 70), 4),
+    v5_rect(im, (0, 48, 8, 64), (40, 60, 110), 4),
+    v5_rect(im, (16, 48, 24, 64), (40, 60, 110), 4)))
+v5_skin('pillar', (92, 64, 38), lambda d, im: (
+    v5_rect(im, (0, 0, 64, 48), (92, 64, 38), 8),
+    d.rectangle([0, 48, 2, 50], fill=v5_c((245, 242, 230))),
+    d.rectangle([3, 48, 5, 50], fill=v5_c((245, 242, 230))),
+    v5_rect(im, (16, 48, 44, 62), (238, 96, 24), 10)))
+
+
+# ---- 2. Flower Man: 128x128, tall dirt column + sunflower + two green legs -----------------
+def v5_flower():
+    im = Image.new('RGBA', (128, 128), (0, 0, 0, 0))
+    v5_rect(im, (0, 0, 64, 48), (118, 82, 54), 16)          # dirt column
+    v5_rect(im, (0, 0, 64, 8), (86, 150, 52), 12)           # grass top
+    for x in range(64):
+        drip = V5_R.randint(2, 6)
+        for y in range(8, 8 + drip):
+            im.putpixel((x, y), (70 + V5_R.randint(-12, 12), 130 + V5_R.randint(-16, 16), 45, 255))
+    d = ImageDraw.Draw(im)
+    for _ in range(30):
+        x = V5_R.randrange(64); y = V5_R.randrange(10, 46)
+        d.line([(x, y), (x + V5_R.randint(-4, 4), y + V5_R.randint(2, 6))], fill=(84, 56, 34, 255))
+    v5_rect(im, (0, 64, 12, 128), (66, 140, 46), 10)        # two green legs
+    d.line([(5, 64), (5, 128)], fill=(40, 96, 30, 255))
+    # big yellow sunflower (16..44 x 32..40) and dark core (48..64 x 32..40)
+    v5_rect(im, (16, 32, 44, 40), (250, 216, 34), 10)
+    d.rectangle([16, 32, 44, 40], outline=(255, 240, 90, 255))
+    for x in range(16, 44, 5):
+        d.line([(x, 32), (x, 40)], fill=(230, 170, 20, 255), width=1)
+    v5_rect(im, (48, 32, 64, 40), (150, 92, 24), 8)
+    d.ellipse([52, 34, 60, 39], fill=(90, 54, 16, 255))
+    v5_rect(im, (64, 32, 72, 40), (48, 120, 36), 6)         # stem
+    im.save(os.path.join(V5_ENTITY, 'flower_man.png'))
+v5_flower()
+
+
+# ---- 3. custom block textures --------------------------------------------------------------
+def v5_cobble(f, x, y, base=(150, 64, 56), seam=(64, 20, 18)):
+    if (x + y * 3) % 7 == 0 or (x * 5 + y) % 11 == 0:
+        return seam
+    return tuple(max(0, min(255, c + V5_R.randint(-14, 14))) for c in base)
+v5_block('red_cobblestone', lambda f, x, y: v5_cobble(f, x, y, (150, 64, 56), (64, 20, 18)))
+v5_block('blood_cobblestone', lambda f, x, y: v5_cobble(f, x, y, (104, 16, 20), (38, 4, 6)))
+
+
+def v5_eye_flower(f, x, y, top):
+    if top:
+        if 5 <= x <= 10 and 5 <= y <= 10:
+            if 7 <= x <= 8 and 7 <= y <= 8:
+                return (18, 18, 22)
+            return (242, 240, 232)
+        return (72, 140, 48) if (x + y) % 3 else (56, 116, 40)
+    return (52, 116, 38) if (x + y) % 4 else (40, 96, 30)
+v5_block('eye_flower_top', lambda f, x, y: v5_eye_flower(f, x, y, True))
+v5_block('eye_flower_bottom', lambda f, x, y: v5_eye_flower(f, x, y, False))
+
+
+def v5_tv(f, x, y):
+    v = V5_R.choice((10, 32, 70, 130, 190, 235))
+    if (y + f * 3) % 16 in (5, 6):
+        v = min(255, v + 40)
+    return (v, v, v)
+v5_block('wonderland_portal', v5_tv, frames=8, frametime=2)
+
+
+def v5_wood_murk(f, x, y):
+    v = 60 + int(24 * np.sin(x * 0.6 + y * 0.3 + f)) + V5_R.randint(-8, 8)
+    return (min(255, v + 26), min(255, int(v * 0.62)), min(255, int(v * 0.32)))
+v5_block('hall_portal', v5_wood_murk, frames=8, frametime=3)
+
+
+def v5_dots(f, x, y):
+    cols = ((60, 220, 90), (240, 170, 40), (90, 150, 240), (220, 70, 70))
+    if (x * 7 + y * 3 + f * 5) % 13 == 0:
+        return cols[(x + y + f) % 4]
+    return (14, 16, 24)
+v5_block('dots_portal', v5_dots, frames=8, frametime=2)
+
+
+def v5_white(f, x, y):
+    v = 225 + V5_R.randint(-18, 18)
+    return (v, v, min(255, v + 10))
+v5_block('white_portal', v5_white, frames=4, frametime=4)
+
+
+def v5_hell(f, x, y):
+    v = 90 + int(40 * np.sin(x * 0.5 + f)) + V5_R.randint(-10, 10)
+    return (min(255, v + 60), max(0, int(v * 0.24)), max(0, int(v * 0.18)))
+v5_block('hellway_portal', v5_hell, frames=8, frametime=2)
+
+
+def v5_door(f, x, y):
+    if x in (0, 15) or y in (0, 7, 8, 15):
+        return (86, 54, 28)
+    if 3 <= x <= 12 and 2 <= y <= 6:
+        return (150, 190, 220) if 4 <= x <= 11 and 3 <= y <= 5 else (60, 40, 22)
+    if 11 <= x <= 13 and y in (9, 10):
+        return (214, 190, 70)
+    v = 150 + V5_R.randint(-12, 12)
+    return (v, int(v * 0.66), int(v * 0.36))
+v5_block('door_portal', v5_door)
+
+
+def v5_freedom(f, x, y):
+    edge = min(x, y, 15 - x, 15 - y)
+    if edge < 2:
+        return (150, 110, 60)
+    v = 235 + V5_R.randint(-14, 14)
+    return (v, v, min(255, v - 8))
+v5_block('freedom_portal', v5_freedom)
+
+
+def v5_wd(f, x, y):
+    v = 130 + int(30 * np.sin(x * 0.7 + y * 0.35 + f * 0.4)) + V5_R.randint(-6, 6)
+    return (min(255, v + 42), min(255, int(v * 0.72)), min(255, int(v * 0.38)))
+v5_block('wonderdream_portal', v5_wd, frames=6, frametime=3)
+
+
+# ---- 4. vanilla block overrides -> the warm wood / pale stone of the photos ----------------
+def v5_planks(f, x, y, base, dark):
+    if y % 4 == 0:
+        return dark
+    j = V5_R.randint(-10, 10)
+    return tuple(max(0, min(255, c + j)) for c in base)
+v5_van('oak_planks', lambda f, x, y: v5_planks(f, x, y, (198, 136, 58), (132, 82, 32)))
+v5_van('spruce_planks', lambda f, x, y: v5_planks(f, x, y, (150, 96, 44), (92, 56, 24)))
+v5_van('dark_oak_planks', lambda f, x, y: v5_planks(f, x, y, (112, 68, 32), (66, 38, 18)))
+v5_van('cobblestone', lambda f, x, y: v5_cobble(f, x, y, (138, 142, 146), (66, 68, 72)))
+v5_van('mossy_cobblestone', lambda f, x, y: v5_cobble(f, x, y, (116, 132, 112), (58, 68, 56)))
+v5_van('stone', lambda f, x, y: tuple(max(0, min(255, c + V5_R.randint(-8, 8))) for c in (128, 130, 134)))
+
+
+# ---- 5. every event icon, redrawn from the photos ------------------------------------------
+def v5_i_cone(d, im):
+    d.polygon([(1, 3), (14, 3), (8, 15)], fill=(5, 6, 10, 255))
+def v5_i_eyes(d, im):
+    v5_i_cone(d, im)
+    d.ellipse([4, 5, 6, 6], fill=(250, 248, 240, 255))
+    d.ellipse([9, 5, 11, 6], fill=(250, 248, 240, 255))
+def v5_i_lying(d, im):
+    d.polygon([(1, 8), (1, 4), (14, 11)], fill=(5, 6, 10, 255))
+def v5_i_star(d, im):
+    d.polygon([(8, 0), (15, 8), (8, 15), (0, 8)], fill=(130, 186, 240, 255))
+    d.polygon([(8, 3), (12, 8), (8, 12), (3, 8)], fill=(176, 220, 255, 255))
+def v5_i_slab(d, im):
+    d.polygon([(1, 6), (4, 3), (15, 6), (12, 10)], fill=(10, 11, 16, 255))
+    d.point([(5, 6), (9, 6)], fill=(60, 240, 90, 255))
+    d.point([(12, 6)], fill=(255, 130, 40, 255))
+def v5_i_tower(d, im):
+    d.rectangle([6, 1, 10, 15], fill=(26, 28, 34, 255))
+    for y in (3, 6, 9, 12):
+        d.point([(7, y), (9, y)], fill=(245, 210, 48, 255))
+    d.point([(2, 4), (13, 5)], fill=(255, 220, 70, 255))
+def v5_i_ufo(d, im):
+    d.polygon([(1, 7), (5, 3), (14, 5), (12, 10), (3, 10)], fill=(28, 34, 44, 255))
+    d.ellipse([4, 7, 7, 9], fill=(242, 226, 58, 255))
+def v5_i_ship(d, im):
+    d.polygon([(2, 8), (8, 2), (14, 8), (8, 11)], fill=(30, 111, 200, 255))
+    d.point([(8, 5)], fill=(255, 140, 40, 255))
+def v5_i_mush(d, im):
+    d.ellipse([4, 2, 11, 7], fill=(226, 220, 214, 255))
+    for x in (5, 7, 10):
+        d.line([(x, 7), (x + V5_R.randint(-2, 2), 15)], fill=(214, 208, 202, 255), width=1)
+def v5_i_longlegs(d, im):
+    d.rectangle([7, 2, 9, 9], fill=(8, 10, 18, 255))
+    d.line([(7, 9), (5, 15)], fill=(8, 10, 18, 255), width=2)
+    d.line([(9, 9), (11, 15)], fill=(8, 10, 18, 255), width=2)
+def v5_i_blue(d, im):
+    d.rectangle([6, 2, 10, 10], fill=(18, 42, 110, 255))
+    d.line([(6, 10), (4, 15)], fill=(18, 42, 110, 255), width=2)
+    d.line([(10, 10), (12, 15)], fill=(18, 42, 110, 255), width=2)
+def v5_i_portal(d, im):
+    d.rectangle([3, 1, 12, 14], fill=(20, 20, 26, 255))
+    for y in range(2, 14, 3):
+        d.line([(4, y), (11, y)], fill=(180, 180, 190, 255))
+def v5_i_castle(d, im):
+    d.rectangle([2, 6, 13, 15], fill=(110, 108, 104, 255))
+    for x in (2, 6, 10, 13):
+        d.rectangle([x, 3, x + 2, 6], fill=(110, 108, 104, 255))
+def v5_i_house(d, im):
+    d.polygon([(1, 7), (8, 1), (15, 7)], fill=(170, 110, 50, 255))
+    d.rectangle([3, 7, 13, 15], fill=(198, 136, 58, 255))
+    d.rectangle([7, 10, 9, 15], fill=(86, 54, 28, 255))
+def v5_i_flower(d, im):
+    d.rectangle([5, 6, 11, 15], fill=(118, 82, 54, 255))
+    d.rectangle([5, 5, 11, 7], fill=(86, 150, 52, 255))
+    d.ellipse([5, 0, 11, 5], fill=(250, 216, 34, 255))
+    d.ellipse([7, 2, 9, 4], fill=(150, 92, 24, 255))
+    d.line([(6, 15), (6, 12)], fill=(66, 140, 46, 255), width=2)
+    d.line([(10, 15), (10, 12)], fill=(66, 140, 46, 255), width=2)
+def v5_i_pillar(d, im):
+    d.rectangle([5, 1, 10, 15], fill=(92, 64, 38, 255))
+    d.point([(6, 4), (9, 4)], fill=(245, 242, 230, 255))
+    d.rectangle([6, 9, 9, 12], fill=(238, 96, 24, 255))
+def v5_i_hole(d, im):
+    d.rectangle([0, 0, 15, 15], fill=(138, 142, 146, 255))
+    d.ellipse([3, 4, 12, 13], fill=(8, 8, 10, 255))
+    d.rectangle([5, 12, 10, 13], fill=(150, 190, 220, 255))
+def v5_i_demon(d, im):
+    d.polygon([(6, 0), (8, 4), (10, 0)], fill=(92, 14, 12, 255))
+    d.rectangle([7, 4, 9, 15], fill=(36, 5, 6, 255))
+    d.point([(7, 5), (9, 5)], fill=(255, 210, 90, 255))
+def v5_i_nevelim(d, im):
+    d.rectangle([6, 1, 10, 9], fill=(9, 10, 24, 255))
+    d.line([(6, 9), (5, 15)], fill=(9, 10, 24, 255), width=2)
+    d.line([(10, 9), (11, 15)], fill=(9, 10, 24, 255), width=2)
+    d.point([(7, 2), (9, 2)], fill=(240, 240, 240, 255))
+def v5_i_eye(d, im):
+    d.rectangle([5, 2, 11, 15], fill=(2, 2, 5, 255))
+    d.rectangle([5, 2, 11, 15], outline=(24, 40, 140, 255))
+    d.point([(7, 4), (9, 4), (7, 6), (9, 6)], fill=(240, 240, 240, 255))
+def v5_i_giant(d, im):
+    d.rectangle([4, 0, 12, 4], fill=(12, 13, 16, 255))
+    d.rectangle([5, 4, 11, 10], fill=(27, 29, 34, 255))
+    d.line([(5, 10), (4, 15)], fill=(27, 29, 34, 255), width=2)
+    d.line([(11, 10), (12, 15)], fill=(27, 29, 34, 255), width=2)
+    d.point([(7, 1), (9, 1)], fill=(245, 245, 240, 255))
+    d.line([(6, 3), (10, 3)], fill=(245, 245, 240, 255))
+def v5_i_fake(d, im):
+    d.rectangle([4, 2, 11, 10], fill=(150, 110, 82, 255))
+    d.rectangle([4, 2, 11, 4], fill=(48, 32, 20, 255))
+    d.rectangle([4, 10, 11, 15], fill=(60, 110, 70, 255))
+def v5_i_one_eye(d, im):
+    d.rectangle([4, 2, 12, 15], fill=(5, 5, 7, 255))
+    d.rectangle([6, 2, 10, 6], fill=(5, 5, 7, 255))
+    d.point([(7, 4), (9, 4)], fill=(242, 212, 75, 255))
+def v5_i_wanderer(d, im):
+    d.line([(2, 6), (14, 6)], fill=(10, 11, 22, 255), width=2)
+    d.rectangle([7, 4, 9, 15], fill=(10, 11, 22, 255))
+def v5_i_hell(d, im):
+    d.rectangle([3, 1, 12, 14], fill=(104, 16, 20, 255))
+    d.rectangle([5, 4, 10, 11], fill=(20, 4, 6, 255))
+
+V5_ICONS = {
+    'event_triangle': v5_i_cone, 'event_triangle_eyes': v5_i_eyes,
+    'event_triangle_lying': v5_i_lying, 'event_triangle_star': v5_i_star,
+    'event_triangle_wanderer': v5_i_wanderer, 'event_slab': v5_i_slab,
+    'event_tower': v5_i_tower, 'event_ufo': v5_i_ufo, 'event_spaceship': v5_i_ship,
+    'event_mushrooms': v5_i_mush, 'event_longlegs': v5_i_longlegs,
+    'event_blue_stranger': v5_i_blue, 'event_portal': v5_i_portal,
+    'event_castle': v5_i_castle, 'event_wrong_house': v5_i_house,
+    'event_hell_portal': v5_i_hell, 'event_flower_man': v5_i_flower,
+    'event_pillar': v5_i_pillar, 'event_hole': v5_i_hole,
+    'event_cave_demon': v5_i_demon, 'event_nevelim': v5_i_nevelim,
+    'event_eye': v5_i_eye, 'event_giant_nevelim': v5_i_giant,
+    'event_fake_player': v5_i_fake, 'event_one_eye_giant': v5_i_one_eye,
+}
+for _n, _fn in V5_ICONS.items():
+    v5_icon(_n, _fn)
+# the eye-flower item icon
+v5_icon('eye_flower', lambda d, im: (
+    d.ellipse([3, 3, 12, 12], fill=(242, 240, 232, 255)),
+    d.ellipse([6, 6, 9, 9], fill=(120, 20, 30, 255)),
+    d.line([(7, 12), (7, 15)], fill=(60, 130, 40, 255), width=1)))
+
+
+# ---- 6. sounds, resynthesised from scratch --------------------------------------------------
+_v5_t = np.arange(int(SR * 2.6)) / SR
+_v5_env = np.exp(-np.linspace(0, 6, len(_v5_t)))
+_v5_chirp = 0.55 * np.sin(2 * np.pi * (1800 + 900 * np.sin(2 * np.pi * 7 * _v5_t)) * _v5_t) * _v5_env
+_v5_hum = 0.35 * (np.sin(2 * np.pi * 48 * _v5_t) + 0.4 * np.sin(2 * np.pi * 71 * _v5_t)) * (0.6 + 0.4 * np.sin(2 * np.pi * 0.3 * _v5_t))
+_v5_steps = np.zeros(len(_v5_t))
+for _i in range(0, len(_v5_t), int(SR * 0.42)):
+    _seg = _v5_t[:min(int(SR * 0.12), len(_v5_t) - _i)]
+    _v5_steps[_i:_i + len(_seg)] = np.random.RandomState(_i).normal(0, 0.35, len(_seg)) * np.exp(-np.linspace(0, 9, len(_seg)))
+_f0 = 620 - 260 * _v5_t
+_v5_ph = 2 * np.pi * np.cumsum(_f0) / SR
+_v5_scream = np.tanh(sum(np.sin(_v5_ph * k) / k for k in (1, 2, 3, 4.1, 5.3)) * 1.7) * _v5_env
+for _nm, _data in (('chirp', _v5_chirp), ('hum', _v5_hum), ('steps', _v5_steps), ('scream', _v5_scream)):
+    sf.write(os.path.join(V5_SOUND, _nm + '.ogg'), np.clip(_data, -1, 1), SR)
+
+
+# ---- 7. blockstates / models / item models, all rewritten ----------------------------------
+V5_PORTAL_BLOCKS = ['blood_cobblestone', 'door_portal', 'dots_portal', 'freedom_portal',
+                    'hall_portal', 'hellway_portal', 'red_cobblestone', 'white_portal',
+                    'wonderdream_portal', 'wonderland_portal']
+for _b in V5_PORTAL_BLOCKS:
+    v5_json(os.path.join(ROOT, 'blockstates', _b + '.json'),
+            {'variants': {'': {'model': 'findaries:block/' + _b}}})
+    v5_json(os.path.join(ROOT, 'models', 'block', _b + '.json'), {
+        'parent': 'minecraft:block/cube_all',
+        'textures': {'all': 'findaries:block/' + _b, 'particle': 'findaries:block/' + _b},
+        'render_type': 'minecraft:translucent' if 'portal' in _b else 'minecraft:solid'
+    })
+    v5_json(os.path.join(ROOT, 'models', 'item', _b + '.json'),
+            {'parent': 'findaries:block/' + _b})
+v5_json(os.path.join(ROOT, 'blockstates', 'eye_flower.json'), {'variants': {
+    'half=lower': {'model': 'findaries:block/eye_flower_bottom'},
+    'half=upper': {'model': 'findaries:block/eye_flower_top'}}})
+for _half in ('top', 'bottom'):
+    v5_json(os.path.join(ROOT, 'models', 'block', 'eye_flower_' + _half + '.json'), {
+        'parent': 'minecraft:block/cross',
+        'textures': {'cross': 'findaries:block/eye_flower_' + _half},
+        'render_type': 'minecraft:cutout'})
+v5_json(os.path.join(ROOT, 'models', 'item', 'eye_flower.json'),
+        {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'findaries:item/eye_flower'}})
+
+V5_EGGS = ['blue_stranger', 'cave_demon', 'danger_12', 'eye', 'fake_player', 'flower_man',
+           'kill000145236', 'nevelim', 'one_eye_giant', 'pillar', 'red_demon', 'she',
+           'sky_person', 'wanderer', 'watcher']
+for _e in V5_EGGS:
+    v5_json(os.path.join(ROOT, 'models', 'item', _e + '_spawn_egg.json'),
+            {'parent': 'minecraft:item/template_spawn_egg'})
+for _n in V5_ICONS:
+    v5_json(os.path.join(ROOT, 'models', 'item', _n + '.json'),
+            {'parent': 'minecraft:item/generated', 'textures': {'layer0': 'findaries:item/' + _n}})
+v5_json(os.path.join(ROOT, 'sounds.json'), {
+    'chirp': {'subtitle': 'subtitles.findaries.chirp', 'sounds': [{'name': 'findaries:chirp', 'attenuation_distance': 64}]},
+    'hum': {'subtitle': 'subtitles.findaries.hum', 'sounds': [{'name': 'findaries:hum', 'attenuation_distance': 64}]},
+    'steps': {'subtitle': 'subtitles.findaries.steps', 'sounds': [{'name': 'findaries:steps'}]},
+    'scream': {'subtitle': 'subtitles.findaries.scream', 'sounds': [{'name': 'findaries:scream', 'attenuation_distance': 96}]}
+})
+
+
+# ---- 8. dimensions / dimension_types / biomes, new palettes --------------------------------
+V5_DIMS = {
+    'wonderland': ('wonderland', 0x8CAEE0, 0xBFD6F0, 7143226, 4972586, 6000, 0.02),
+    'hallway': ('void', 0x1A1208, 0x2A1C0C, 3824170, 3824170, 18000, 0.02),
+    'wonderflowers': ('wonderflowers', 0xB9D8F0, 0xDCEBF8, 7143226, 4972586, 6000, 0.0),
+    'cage_wonderland': ('cage', 0x6E86B0, 0x9DB4D0, 4824170, 3824170, 14000, 0.03),
+    'hellway': ('hellway', 0x220404, 0x3A0808, 0x6A2020, 0x501818, 18000, 0.02),
+    'the_wonderdream': ('wonderdream', 0x2A1C0C, 0x4A2E14, 0x9A6A32, 0x7A5228, 18000, 0.34),
+    'stonehell': ('stonehell', 0x1A1C20, 0x26282C, 0x4A4A48, 0x4A4A48, 18000, 0.22),
+}
+for _key, (_style, _sky, _fog, _grass, _foliage, _time, _amb) in V5_DIMS.items():
+    v5_json(os.path.join(V5_DATA, 'dimension', _key + '.json'), {
+        'type': 'findaries:' + _key,
+        'generator': {'type': 'findaries:dream', 'style': _style,
+                      'biome_source': {'type': 'minecraft:fixed', 'biome': 'findaries:' + _key}}})
+    v5_json(os.path.join(V5_DATA, 'dimension_type', _key + '.json'), {
+        'ultrawarm': False, 'natural': _key not in ('the_wonderdream', 'stonehell'),
+        'piglin_safe': False, 'respawn_anchor_works': False, 'bed_works': False,
+        'has_raids': False, 'has_skylight': _key != 'the_wonderdream',
+        'has_ceiling': _key == 'the_wonderdream', 'coordinate_scale': 1.0,
+        'ambient_light': _amb, 'logical_height': 256, 'effects': 'minecraft:overworld',
+        'infiniburn': '#minecraft:infiniburn_overworld', 'min_y': 0, 'height': 256,
+        'monster_spawn_light_level': 0, 'monster_spawn_block_light_limit': 0,
+        'fixed_time': _time})
+    v5_json(os.path.join(V5_DATA, 'worldgen', 'biome', _key + '.json'), {
+        'has_precipitation': False, 'temperature': 0.8, 'downfall': 0.4,
+        'effects': {'sky_color': _sky, 'fog_color': _fog, 'water_color': 4159204,
+                    'water_fog_color': 329011, 'grass_color': _grass, 'foliage_color': _foliage},
+        'spawners': {'monster': [], 'creature': [], 'ambient': [], 'axolotls': [],
+                     'underground_water_creature': [], 'water_creature': [],
+                     'water_ambient': [], 'misc': []},
+        'spawn_costs': {}, 'carvers': {}, 'features': []})
+
+print('0.5.0 assets rebuilt from the 22 reference photos')

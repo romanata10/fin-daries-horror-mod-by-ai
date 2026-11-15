@@ -1,6 +1,8 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "findaries:block/blood_cobblestone"
-  }
+    "all": "findaries:block/blood_cobblestone",
+    "particle": "findaries:block/blood_cobblestone"
+  },
+  "render_type": "minecraft:solid"
 }

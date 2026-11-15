@@ -622,6 +622,24 @@ public class DreamChunkGenerator extends ChunkGenerator {
                 }
             }
         }
+        // 0.5.0 (refs 15-18): upper galleries, warm rails, more framed pictures and torches
+        for (int gx = Math.floorDiv(c.minX, 16) - 1; gx <= Math.floorDiv(c.maxX, 16) + 1; gx++) {
+            for (int gz = Math.floorDiv(c.minZ, 16) - 1; gz <= Math.floorDiv(c.maxZ, 16) + 1; gz++) {
+                int bx = gx * 16, bz = gz * 16;
+                for (int i = 0; i < 16; i++) {
+                    c.set(bx + i, y0 + 8, bz + 7, Blocks.OAK_FENCE.defaultBlockState());
+                    c.set(bx + 7, y0 + 8, bz + i, Blocks.OAK_FENCE.defaultBlockState());
+                }
+                c.set(bx + 1, y0 + 9, bz + 5, Blocks.BROWN_CONCRETE.defaultBlockState());
+                c.set(bx + 1, y0 + 10, bz + 5, Blocks.BLUE_CONCRETE.defaultBlockState());
+                c.set(bx + 14, y0 + 9, bz + 5, Blocks.GREEN_CONCRETE.defaultBlockState());
+                c.set(bx + 14, y0 + 10, bz + 5, Blocks.RED_CONCRETE.defaultBlockState());
+                for (int i = 2; i < 16; i += 5) {
+                    c.set(bx + i, y0 + 3, bz + 1, Blocks.TORCH.defaultBlockState());
+                    c.set(bx + i, y0 + 10, bz + 1, Blocks.TORCH.defaultBlockState());
+                }
+            }
+        }
     }
 
     // ---- stonehell: a cobblestone labyrinth the size of the Hellway ------------------------
@@ -681,6 +699,11 @@ public class DreamChunkGenerator extends ChunkGenerator {
             c.set(11, HELL_FLOOR, z0 + 33, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.WEST));
             c.set(12, HELL_FLOOR, z0 + 33, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.WEST));
             c.set(9, HELL_FLOOR + 4, z0 + 36, Blocks.SEA_LANTERN.defaultBlockState());
+            for (int dy = 0; dy <= 2; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    c.set(3, HELL_FLOOR + dy, z0 + 36 + dz, Blocks.OAK_PLANKS.defaultBlockState());
+                }
+            }
             c.set(6, HELL_FLOOR + 4, z0 + 33, Blocks.SEA_LANTERN.defaultBlockState());
             c.set(13, HELL_FLOOR + 4, z0 + 40, Blocks.SEA_LANTERN.defaultBlockState());
             for (int y = HELL_FLOOR; y <= HELL_FLOOR + 2; y++) {
