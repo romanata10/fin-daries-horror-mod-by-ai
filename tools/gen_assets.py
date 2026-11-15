@@ -848,7 +848,7 @@ def v5_dark(d, im, base, rim, eyes=None, ribs=False, horns=False):
         d.polygon([(14, 0), (16, 4), (18, 0)], fill=v5_c(rim))
     if eyes:
         for (ex, ey) in eyes:
-            d.rectangle([ex, ey, ex + 1, ey + 1], fill=v5_c((255, 210, 90)))
+            d.rectangle([ex, ey, ex + 2, ey + 2], fill=v5_c((255, 214, 96)))
     if ribs:
         for yy in (21, 24, 27, 30):
             d.line([(21, yy), (27, yy)], fill=v5_c(rim), width=1)
@@ -858,10 +858,10 @@ v5_skin('wanderer', (10, 11, 22), lambda d, im: v5_dark(d, im, (10, 11, 22), (30
 v5_skin('blue_stranger', (12, 34, 92), lambda d, im: v5_dark(d, im, (12, 34, 92), (40, 80, 160)))
 v5_skin('danger_12', (14, 10, 26), lambda d, im: v5_dark(d, im, (14, 10, 26), (60, 40, 90)))
 v5_skin('she', (4, 4, 9), lambda d, im: v5_dark(d, im, (4, 4, 9), (70, 30, 100)))
-v5_skin('red_demon', (36, 5, 6), lambda d, im: v5_dark(
-    d, im, (36, 5, 6), (92, 14, 12), eyes=[(9, 11), (13, 11)], ribs=True, horns=True))
-v5_skin('cave_demon', (30, 6, 7), lambda d, im: v5_dark(
-    d, im, (30, 6, 7), (78, 16, 14), eyes=[(9, 11), (13, 11)], ribs=True, horns=True))
+v5_skin('red_demon', (70, 12, 12), lambda d, im: v5_dark(
+    d, im, (70, 12, 12), (152, 34, 26), eyes=[(9, 10), (13, 10)], ribs=True, horns=True))
+v5_skin('cave_demon', (60, 12, 14), lambda d, im: v5_dark(
+    d, im, (60, 12, 14), (132, 30, 26), eyes=[(9, 10), (13, 10)], ribs=True, horns=True))
 v5_skin('one_eye_giant', (5, 5, 7), lambda d, im: v5_dark(
     d, im, (5, 5, 7), (18, 18, 20), eyes=[(10, 10), (12, 10)]))
 v5_skin('nevelim', (9, 10, 24), lambda d, im: v5_dark(
