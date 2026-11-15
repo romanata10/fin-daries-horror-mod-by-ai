@@ -128,7 +128,7 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         return LayerDefinition.create(mesh, 64, 64);
     }
 
-    public boolean glows() { return this.shape.has(Shape.GLOW) || this.shape.horns(); }
+    public boolean glows() { return this.shape.has(GLOW) || this.shape.horns(); }
 
     private static float stretchY(float y, float k) { return 24.0F + (y - 24.0F) * k; }
 
@@ -156,17 +156,17 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         float headZ = 4.0F * s.head;
         float bodyZ = 2.0F * s.bodyWidth;
 
-        place(this.head, 0.0F, headY, s.head * (s.has(Shape.WIDE_HEAD) ? 1.5F : 1.0F), headYS, s.head);
+        place(this.head, 0.0F, headY, s.head * (s.has(WIDE_HEAD) ? 1.5F : 1.0F), headYS, s.head);
         place(this.body, 0.0F, headY, s.bodyWidth, bodyYS, s.bodyWidth);
         place(this.rightArm, -(halfBody + s.limbWidth), stretchY(bodyTop + 2.0F * s.armLength, k), s.limbWidth, s.armLength * k, s.limbWidth);
         place(this.leftArm, halfBody + s.limbWidth, stretchY(bodyTop + 2.0F * s.armLength, k), s.limbWidth, s.armLength * k, s.limbWidth);
         place(this.rightLeg, -legX, stretchY(legTop, k), s.limbWidth, s.legLength * k, s.limbWidth);
         place(this.leftLeg, legX, stretchY(legTop, k), s.limbWidth, s.legLength * k, s.limbWidth);
 
-        this.rightArm.visible = !s.has(Shape.NO_ARMS);
-        this.leftArm.visible = !s.has(Shape.NO_ARMS);
-        this.rightLeg.visible = !s.has(Shape.NO_LEGS);
-        this.leftLeg.visible = !s.has(Shape.NO_LEGS);
+        this.rightArm.visible = !s.has(NO_ARMS);
+        this.leftArm.visible = !s.has(NO_ARMS);
+        this.rightLeg.visible = !s.has(NO_LEGS);
+        this.leftLeg.visible = !s.has(NO_LEGS);
 
         this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
         this.head.xRot = headPitch * Mth.DEG_TO_RAD;
@@ -180,15 +180,15 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
 
         // ---- photo-specific 3D details, sitting on the FRONT faces ----
         placeAt(this.eyes, 0.0F, headY - 4.6F * headYS, -(headZ + 0.35F), s.head, headYS, s.head);
-        this.eyes.visible = s.has(Shape.EYES);
+        this.eyes.visible = s.has(EYES);
         this.eyes.yRot = this.head.yRot; this.eyes.xRot = this.head.xRot; this.eyes.zRot = this.head.zRot;
         placeAt(this.dots, 0.0F, headY - 5.6F * headYS, -(headZ + 0.30F), s.head, headYS, 1.0F);
-        this.dots.visible = s.has(Shape.DOTS);
+        this.dots.visible = s.has(DOTS);
         this.dots.yRot = this.head.yRot; this.dots.xRot = this.head.xRot; this.dots.zRot = this.head.zRot;
         placeAt(this.ribs, 0.0F, headY + 1.2F, -(bodyZ + 0.35F), s.bodyWidth, bodyYS / 12.0F, 1.0F);
-        this.ribs.visible = s.has(Shape.RIBS);
+        this.ribs.visible = s.has(RIBS);
         placeAt(this.traffic, 0.0F, headY + 2.2F, -(bodyZ + 0.40F), Math.max(0.6F, s.bodyWidth), bodyYS / 12.0F, 1.0F);
-        this.traffic.visible = s.has(Shape.TRAFFIC);
+        this.traffic.visible = s.has(TRAFFIC);
 
         float stride = 0.6662F / Mth.sqrt(s.legLength);
         float swing = Mth.cos(limbSwing * stride) * 0.8F * limbSwingAmount;
