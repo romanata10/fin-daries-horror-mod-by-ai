@@ -178,7 +178,7 @@ public final class ModRegistry {
     public static final RegistryObject<Item> FLOWER_MAN_EGG = egg("flower_man", FLOWER_MAN, 0x7A5536, 0x55B030);
     public static final RegistryObject<Item> RED_DEMON_EGG = egg("red_demon", RED_DEMON, 0x5A0808, 0xFF3020);
     public static final RegistryObject<Item> SKY_PERSON_EGG = egg("sky_person", SKY_PERSON, 0x8A8A8A, 0xD03030);
-    public static final RegistryObject<Item> PILLAR_EGG = egg("pillar", PILLAR, 0x6B4B2A, 0xEDE6D0);
+    public static final RegistryObject<Item> PILLAR_EGG = egg("pillar", PILLAR, 0x0B0B10, 0xE8D24A);
     public static final RegistryObject<Item> FAKE_PLAYER_EGG = egg("fake_player", FAKE_PLAYER, 0x3C7A4A, 0xC8A27A);
     public static final RegistryObject<Item> CAVE_DEMON_EGG = egg("cave_demon", CAVE_DEMON, 0x4A0606, 0xFF3B18);
     public static final RegistryObject<Item> ONE_EYE_GIANT_EGG = egg("one_eye_giant", ONE_EYE_GIANT, 0x20212A, 0xF0D020);

@@ -15,30 +15,38 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 
 /**
- * A player-skin shaped body whose parts are stretched per entity:
- * the same mesh makes the five block tall faceless Steve and the thin stick figures.
+ * A player-skin shaped body whose parts are stretched per entity.
+ * LONGLEGS is plain Steve with only the legs stretched (image-10); every other
+ * shape follows its own reference photo.
  */
 public class TallHumanModel<T extends Mob> extends EntityModel<T> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(FinDaries.rl("tall_human"), "main");
 
     /** All factors are relative to a normal player (legs/arms/body 12 px long, limbs 4 px thick). */
     public record Shape(float head, float bodyWidth, float bodyHeight, float limbWidth, float armLength, float legLength, float armSpread, boolean horns) {
-        public static final Shape LONGLEGS = new Shape(0.9F, 0.55F, 1.3F, 0.25F, 2.4F, 3.6F, 0.05F, false);
-        public static final Shape BLUE_STRANGER = new Shape(0.9F, 0.55F, 1.4F, 0.25F, 2.2F, 3.0F, 0.05F, false);
-        public static final Shape WATCHER = new Shape(0.6F, 0.32F, 1.4F, 0.16F, 2.4F, 3.2F, 0.35F, false);
-        public static final Shape WANDERER = new Shape(0.7F, 0.45F, 1.5F, 0.18F, 2.5F, 3.2F, Mth.HALF_PI, false);
-        public static final Shape SHE = new Shape(0.7F, 0.38F, 1.5F, 0.18F, 2.2F, 3.0F, 0.03F, false);
-        /** Image-12: extremely thin, horned, almost all legs. */
-        public static final Shape RED_DEMON = new Shape(0.42F, 0.12F, 2.3F, 0.06F, 2.4F, 4.2F, 0.02F, true);
+        /** image-10 / "Стив без лица": a normal player, only stretched. Head, torso and
+         *  arms keep Steve's 1.0 proportions; only the legs (and a little the body) are longer. */
+        public static final Shape LONGLEGS = new Shape(1.0F, 1.0F, 1.15F, 1.0F, 1.25F, 2.35F, 0.0F, false);
+        /** image-1: dark thin figure against blue sky, still player-shaped. */
+        public static final Shape BLUE_STRANGER = new Shape(0.95F, 0.95F, 1.20F, 0.95F, 1.20F, 2.10F, 0.0F, false);
+        /** image-6: blurred grey humanoid, almost normal proportions. */
+        public static final Shape WATCHER = new Shape(0.95F, 0.90F, 1.25F, 0.90F, 1.15F, 1.90F, 0.0F, false);
+        /** image-9: a cross-shaped silhouette in the forest, arms horizontal. */
+        public static final Shape WANDERER = new Shape(0.85F, 0.80F, 1.20F, 0.70F, 1.50F, 2.00F, Mth.HALF_PI, false);
+        /** image-2: thin figure in a purple city. */
+        public static final Shape SHE = new Shape(0.90F, 0.80F, 1.30F, 0.75F, 1.30F, 2.10F, 0.02F, false);
+        /** image-12: extremely thin, horned, almost all legs. */
+        public static final Shape RED_DEMON = new Shape(0.42F, 0.12F, 2.30F, 0.06F, 2.40F, 4.20F, 0.02F, true);
         public static final Shape CAVE_DEMON = RED_DEMON;
-        public static final Shape SKY_PERSON = new Shape(1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, false);
-        public static final Shape DANGER_12 = new Shape(0.6F, 0.28F, 1.5F, 0.16F, 2.4F, 3.2F, 0.25F, false);
-        /** Image-19: a wide black rectangle with a small head and two yellow eyes. */
-        public static final Shape ONE_EYE_GIANT = new Shape(0.55F, 1.4F, 2.8F, 0.30F, 0.6F, 1.9F, 0.0F, false);
-        /** Image-22: very tall, very thin, dark navy, cube head with white eyes. */
-        public static final Shape NEVELIM = new Shape(0.55F, 0.20F, 2.5F, 0.09F, 3.0F, 4.0F, 0.02F, false);
-        /** Image-20: a black monolith with a thin blue outline and a dotted head. */
-        public static final Shape EYE = new Shape(0.5F, 1.0F, 2.4F, 0.12F, 0.35F, 1.6F, 0.0F, false);
+        /** image-13: Steve's head on a wide grey traffic-light column, no visible limbs. */
+        public static final Shape SKY_PERSON = new Shape(1.0F, 1.30F, 1.80F, 0.12F, 0.35F, 0.60F, 0.0F, false);
+        public static final Shape DANGER_12 = new Shape(0.85F, 0.75F, 1.30F, 0.70F, 1.40F, 2.10F, 0.10F, false);
+        /** image-19: a solid black rectangle, small head, two yellow eyes, no legs to speak of. */
+        public static final Shape ONE_EYE_GIANT = new Shape(0.80F, 1.25F, 2.60F, 0.25F, 0.50F, 0.90F, 0.0F, false);
+        /** image-22: tall thin navy figure with a cube head and long legs. */
+        public static final Shape NEVELIM = new Shape(0.80F, 0.60F, 1.35F, 0.18F, 1.60F, 3.20F, 0.02F, false);
+        /** image-20: a black monolith with a thin blue outline and a dotted head. */
+        public static final Shape EYE = new Shape(0.55F, 1.05F, 2.40F, 0.12F, 0.30F, 1.50F, 0.0F, false);
     }
 
     private final Shape shape;
@@ -114,6 +122,7 @@ public class TallHumanModel<T extends Mob> extends EntityModel<T> {
         this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
         this.head.xRot = headPitch * Mth.DEG_TO_RAD;
         place(this.jaw, 0.0F, bodyTop, s.head, s.head, s.head);
+        this.jaw.visible = s.horns;
         this.jaw.yRot = this.head.yRot;
         this.jaw.xRot = this.head.xRot;
         place(this.horns, 0.0F, bodyTop, s.head, s.head, s.head);
